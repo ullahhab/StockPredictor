@@ -2,6 +2,8 @@ import yfinance as yf
 import tkinter as tk
 from tkinter import ttk
 from tqdm import tqdm
+import random
+
 stocklst = ''
 
 
@@ -78,5 +80,23 @@ def getTicker():
 
 def doAnalysis():
     getTicker()
+    file = open("stock.csv", 'r')
+    header = file.readline()
+    rest = file.read()
+    rest = rest.split('\n')
+    intial = 500
+    stockSugg = open("StockSuggestion.csv", 'w')
+    stockSugg.write("Stock, buy price, sell price, percentage increase\n")
+    for i in range(54):
+        stock = random.randint(len(rest))
+        stock = rest[stock].split(",")
+        initial+= initial * ((int(stock[5])/100)+1)
+        if i%2==0:
+            initial+=500
+        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+'\n')
+    stockSugg.write("Total = "+str(initial/1000000)+"million\n")
+
+
+
 
 doAnalysis()
