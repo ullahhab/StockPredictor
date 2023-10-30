@@ -27,7 +27,7 @@ def getSymbl():
 def getTicker():
     global data, stocklst
     file  = open('stocks.csv','w')
-    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit\n")
+    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest\n")
     getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
@@ -35,7 +35,6 @@ def getTicker():
         print(test)
         print(ticker.history(period='1mo'))
     """
-    print(stocklst[:len(stocklst)-2])
     stocklst = stocklst.split()
     total = len(stocklst)
     onePerc = int(total*0.01)
@@ -57,12 +56,22 @@ def getTicker():
                 weeklyInd = 0
                 avglow = 0
                 avghigh = 0
+                lowest = 0
+                highest = 0
+                add = True
                 for date, row in data.iterrows():
-                    #print(row)
+                    if(add):
+                        lowest = row['Low']
+                        highest = row['High']
+                        add = False
                     dailyavgChange += abs(row['High'] - row['Low'])
                     weekend += abs(row['High']- row['Low'])
                     avglow += row['Low']
                     avghigh += row['High']
+                    if(row['High']> highest):
+                        highest = row['High']
+                    if(row['Low']< lowest):
+                        lowest = row['Low']                   
                     if weeklyInd % 5==0:
                         weeklyCount+=1
                         weeklyavgChange+= (weekend/5)
@@ -70,7 +79,7 @@ def getTicker():
                     dailyCount+=1
                     dailyavgChange = dailyavgChange/dailyCount
                     if dailyavgChange / row['Low'] >= 0.15:
-                        file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+"\n")                       
+                        file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+"\n")                       
             except Exception as e:
                 print(e)
             finally:
@@ -80,17 +89,17 @@ def getTicker():
 
 def doAnalysis():
     getTicker()
-    file = open("stock.csv", 'r')
+    file = open("stocks.csv", 'r')
     header = file.readline()
     rest = file.read()
     rest = rest.split('\n')
-    intial = 500
+    initial = 500.0
     stockSugg = open("StockSuggestion.csv", 'w')
     stockSugg.write("Stock, buy price, sell price, percentage increase\n")
     for i in range(54):
-        stock = random.randint(len(rest))
+        stock = random.randint(1, len(rest)-1)
         stock = rest[stock].split(",")
-        initial+= initial * ((int(stock[5])/100)+1)
+        initial+= (initial // float(stock[2])) * float(stock[3])
         if i%2==0:
             initial+=500
         stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+'\n')
