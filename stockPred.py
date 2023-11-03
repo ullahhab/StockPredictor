@@ -41,7 +41,7 @@ def getTicker():
     print(onePerc, total)
     counter = 1
     perc = 0
-    with tqdm(total=len(stocklst), desc="Downloading Stocks") as pbar:
+    with tqdm(total=len(stocklst), desc="Analysing Stocks") as pbar:
         for stock in stocklst:
             try:
                 if '^' in stock:
@@ -77,9 +77,9 @@ def getTicker():
                         weeklyavgChange+= (weekend/5)
                         weekend = 0
                     dailyCount+=1
-                    dailyavgChange = dailyavgChange/dailyCount
-                    if dailyavgChange / row['Low'] >= 0.15:
-                        file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+"\n")                       
+                dailyavgChange = dailyavgChange/dailyCount
+                if dailyavgChange / row['Low'] >= 0.15:
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+"\n")               
             except Exception as e:
                 print(e)
             finally:
