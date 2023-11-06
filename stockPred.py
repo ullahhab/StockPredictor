@@ -96,9 +96,14 @@ def getTicker():
                 dailyavgChange = dailyavgChange/dailyCount
                 dailyAvgPrice = dailyAvgPrice/dailyCount
                 #RSI = 100 - [100 / (1 + RS)]
-                RSI = 100 - (100 / (1+ (sum(positive) / dailyCount)/(sum(negative)/ dailyCount)))
+                if dailyCount ==0 or sum(positive) == 0:
+                    RSI = 0
+                elif sum(negative) == 0: 
+                    RSI = 100
+                else:
+                    RSI = 100 - (100 / (1+ (sum(positive) / len(positive))/(sum(negative)/ len(negative))))
                 if dailyavgChange / row['Low'] >= 0.15:
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)"\n")
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+"\n")
 
             except Exception as e:
                 print(e)
