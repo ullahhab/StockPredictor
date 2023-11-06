@@ -27,7 +27,7 @@ def getSymbl():
 def getTicker():
     global data, stocklst
     file  = open('stocks.csv','w')
-    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest\n")
+    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI\n")
     getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
@@ -62,12 +62,14 @@ def getTicker():
                 add = True
                 weeklyPrice = 0
                 weeklyAvgPrice = 0
+                prev = 0
                 for date, row in data.iterrows():
                     if(add):
                         lowest = row['Low']
                         highest = row['High']
                         add = False
-                    
+                    positive = []
+                    negative = []
                     dailyavgChange += abs(row['High'] - row['Low'])
                     weekend += abs(row['High']- row['Low'])
                     avglow += row['Low']
@@ -85,10 +87,18 @@ def getTicker():
                         weekend = 0
                         weeklyPrice = 0
                     dailyCount+=1
+                    if (row['Adj Close']- prev <0):
+                        negative.append(row['Adj Close'])
+                    else:
+                        positive.append(row['Adj Close'])
+                    prev = row['Adj Close']
+                
                 dailyavgChange = dailyavgChange/dailyCount
                 dailyAvgPrice = dailyAvgPrice/dailyCount
+                #RSI = 100 - [100 / (1 + RS)]
+                RSI = 100 - (100 / (1+ (sum(positive) / dailyCount)/(sum(negative)/ dailyCount)))
                 if dailyavgChange / row['Low'] >= 0.15:
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+"\n")
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)"\n")
 
             except Exception as e:
                 print(e)
