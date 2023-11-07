@@ -63,13 +63,13 @@ def getTicker():
                 weeklyPrice = 0
                 weeklyAvgPrice = 0
                 prev = 0
+                positive = []
+                negative = []
                 for date, row in data.iterrows():
                     if(add):
                         lowest = row['Low']
                         highest = row['High']
                         add = False
-                    positive = []
-                    negative = []
                     dailyavgChange += abs(row['High'] - row['Low'])
                     weekend += abs(row['High']- row['Low'])
                     avglow += row['Low']
@@ -88,20 +88,21 @@ def getTicker():
                         weeklyPrice = 0
                     dailyCount+=1
                     if (row['Adj Close']- prev <0):
-                        negative.append(row['Adj Close'])
+                        negative.append(abs(row['Adj Close']-prev))
                     else:
-                        positive.append(row['Adj Close'])
+                        positive.append((row['Adj Close']-prev))
                     prev = row['Adj Close']
-                
                 dailyavgChange = dailyavgChange/dailyCount
                 dailyAvgPrice = dailyAvgPrice/dailyCount
+                avglow = avglow/dailyCount
+                avghigh = avghigh/dailyCount
                 #RSI = 100 - [100 / (1 + RS)]
                 if dailyCount ==0 or sum(positive) == 0:
                     RSI = 0
                 elif sum(negative) == 0: 
                     RSI = 100
                 else:
-                    RSI = 100 - (100 / (1+ (sum(positive) / len(positive))/(sum(negative)/ len(negative))))
+                    RSI = 100 - (100 / (1+ (sum(positive) / dailyCount)/(sum(negative)/ dailyCount)))
                 if dailyavgChange / row['Low'] >= 0.15:
                     file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+"\n")
 
