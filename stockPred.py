@@ -27,7 +27,7 @@ def getSymbl():
 def getTicker():
     global data, stocklst
     file  = open('stocks.csv','w')
-    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI\n")
+    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI, current price\n")
     getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
@@ -46,7 +46,7 @@ def getTicker():
             try:
                 if '^' in stock:
                     stock = stock[:stock.index("^")]
-                data = yf.download(stock, period='2y', progress=False)
+                data = yf.download(stock, period='6mo', progress=False)
                 counter+=1
                 dailyavgChange = 0
                 weeklyavgChange = 0
@@ -104,7 +104,7 @@ def getTicker():
                 else:
                     RSI = 100 - (100 / (1+ (sum(positive) / dailyCount)/(sum(negative)/ dailyCount)))
                 if dailyavgChange / row['Low'] >= 0.15:
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+"\n")
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(row['Adj Close'])+"\n")
 
             except Exception as e:
                 print(e)
@@ -128,7 +128,7 @@ def doAnalysis():
         initial+= (initial // float(stock[2])) * float(stock[3])
         if i%2==0:
             initial+=500
-        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+'\n')
+        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[10]+'\n')
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
 
 
