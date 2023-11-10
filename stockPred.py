@@ -27,7 +27,7 @@ def getSymbl():
 def getTicker():
     global data, stocklst
     file  = open('stocks.csv','w')
-    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI\n")
+    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI, Rating, Current Price\n")
     getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
@@ -46,7 +46,7 @@ def getTicker():
             try:
                 if '^' in stock:
                     stock = stock[:stock.index("^")]
-                data = yf.download(stock, period='2y', progress=False)
+                data = yf.download(stock, period='6mo', progress=False)
                 counter+=1
                 dailyavgChange = 0
                 weeklyavgChange = 0
@@ -62,7 +62,7 @@ def getTicker():
                 add = True
                 weeklyPrice = 0
                 weeklyAvgPrice = 0
-                prev = 0
+                prev = 1
                 positive = []
                 negative = []
                 for date, row in data.iterrows():
@@ -88,9 +88,9 @@ def getTicker():
                         weeklyPrice = 0
                     dailyCount+=1
                     if (row['Adj Close']- prev <0):
-                        negative.append(abs(row['Adj Close']-prev))
+                        negative.append(abs(row['Adj Close']-prev) /prev)
                     else:
-                        positive.append((row['Adj Close']-prev))
+                        positive.append((row['Adj Close']-prev) / prev)
                     prev = row['Adj Close']
                 dailyavgChange = dailyavgChange/dailyCount
                 dailyAvgPrice = dailyAvgPrice/dailyCount
@@ -102,9 +102,15 @@ def getTicker():
                 elif sum(negative) == 0: 
                     RSI = 100
                 else:
-                    RSI = 100 - (100 / (1+ (sum(positive) / dailyCount)/(sum(negative)/ dailyCount)))
+                    RSI = 100 - (100 / (1+ ((sum(positive) / dailyCount)/(sum(negative)/ dailyCount))))
+                if RSI < 30:
+                    Rating = "Oversold"
+                elif RSI > 80:
+                    Rating = "OverBought"
+                else:
+                    Rating = "Normal"
                 if dailyavgChange / row['Low'] >= 0.15:
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+"\n")
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Adj Close'])+"\n")
 
             except Exception as e:
                 print(e)
@@ -121,14 +127,14 @@ def doAnalysis():
     rest = rest.split('\n')
     initial = 500.0
     stockSugg = open("StockSuggestion.csv", 'w')
-    stockSugg.write("Stock, buy price, sell price, percentage increase\n")
+    stockSugg.write("Stock, buy price, sell price, percentage increase, Current Price, Rating\n")
     for i in range(54):
         stock = random.randint(1, len(rest)-1)
         stock = rest[stock].split(",")
         initial+= (initial // float(stock[2])) * float(stock[3])
-        if i%2==0:
-            initial+=500
-        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+'\n')
+        #if i%2==0:
+            #initial+=500
+        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[10]+", "+stock[11]+'\n')
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
 
 
