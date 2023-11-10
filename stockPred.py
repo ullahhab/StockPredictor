@@ -27,11 +27,7 @@ def getSymbl():
 def getTicker():
     global data, stocklst
     file  = open('stocks.csv','w')
-<<<<<<< HEAD
     file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI, Rating, Current Price\n")
-=======
-    file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI, current price\n")
->>>>>>> a7436b9fe27768db5f90be4b8a692cb877c77ba4
     getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
@@ -114,12 +110,7 @@ def getTicker():
                 else:
                     Rating = "Normal"
                 if dailyavgChange / row['Low'] >= 0.15:
-<<<<<<< HEAD
                     file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Adj Close'])+"\n")
-=======
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(row['Adj Close'])+"\n")
->>>>>>> a7436b9fe27768db5f90be4b8a692cb877c77ba4
-
             except Exception as e:
                 print(e)
             finally:
@@ -140,15 +131,9 @@ def doAnalysis():
         stock = random.randint(1, len(rest)-1)
         stock = rest[stock].split(",")
         initial+= (initial // float(stock[2])) * float(stock[3])
-<<<<<<< HEAD
-        #if i%2==0:
-            #initial+=500
-        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[10]+", "+stock[11]+'\n')
-=======
         if i%2==0:
             initial+=500
         stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[10]+'\n')
->>>>>>> a7436b9fe27768db5f90be4b8a692cb877c77ba4
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
 
 
