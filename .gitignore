@@ -2,5 +2,5 @@
 /dist
 /build
 /stockPred.spec
-/stockSuggestion.csv
+/StockSuggestion.csv
 /stocks.csv
