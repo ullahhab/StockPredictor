@@ -119,7 +119,7 @@ def getTicker():
         
 
 def doAnalysis():
-    getTicker()
+    #getTicker()
     file = open("stocks.csv", 'r')
     header = file.readline()
     rest = file.read()
@@ -128,12 +128,14 @@ def doAnalysis():
     stockSugg = open("StockSuggestion.csv", 'w')
     stockSugg.write("Stock, buy price, sell price, percentage increase, Current Price, Rating\n")
     for i in range(54):
-        stock = random.randint(1, len(rest)-1)
+        stock = random.randint(1, len(rest)-2)
+        print(stock)
         stock = rest[stock].split(",")
+        print(stock)
         initial+= (initial // float(stock[2])) * float(stock[3])
         if i%2==0:
             initial+=500
-        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[10]+'\n')
+        stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[11]+", "+stock[10]+'\n')
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
 
 
