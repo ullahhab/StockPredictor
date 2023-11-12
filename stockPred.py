@@ -15,7 +15,7 @@ data = ""
 
 def getSymbl():
     global stocklst
-    file = open('stocksList.csv', 'r')
+    file = open('tmpFile.txt', 'r')
     file.readline()
     read = file.read()
     read = read.split('\n')
@@ -47,6 +47,8 @@ def getTicker():
                 if '^' in stock:
                     stock = stock[:stock.index("^")]
                 data = yf.download(stock, period='6mo', progress=False)
+                if len(data) == 0:
+                    print(data)
                 counter+=1
                 dailyavgChange = 0
                 weeklyavgChange = 0
@@ -119,7 +121,7 @@ def getTicker():
         
 
 def doAnalysis():
-    #getTicker()
+    getTicker()
     file = open("stocks.csv", 'r')
     header = file.readline()
     rest = file.read()
@@ -129,9 +131,7 @@ def doAnalysis():
     stockSugg.write("Stock, buy price, sell price, percentage increase, Current Price, Rating\n")
     for i in range(54):
         stock = random.randint(1, len(rest)-2)
-        print(stock)
         stock = rest[stock].split(",")
-        print(stock)
         initial+= (initial // float(stock[2])) * float(stock[3])
         if i%2==0:
             initial+=500
@@ -141,4 +141,4 @@ def doAnalysis():
 
 
 
-doAnalysis()
+#doAnalysis()
