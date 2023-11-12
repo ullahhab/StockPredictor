@@ -69,7 +69,7 @@ while True:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
-    if current_time >= "20:16" and current_time < "20:30" and not(is_saturday or is_sunday):
+    if current_time >= "8:30" and current_time < "15:30" and not(is_saturday or is_sunday):
         run_bot()
     else:
         print("non trading hours/day")
