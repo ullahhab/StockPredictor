@@ -58,7 +58,8 @@ def analyze():
             stock = line.split(",")
             if float(stock[2]) <= float(stock[11]):
                 goodForBuy.append(stock)
-                print(stock)
+    except IndexError as e:
+        pass
     except Exception as e:
         print(e)
 
@@ -66,8 +67,13 @@ def analyze():
 analyze()
 while True:
     current_time = datetime.now().strftime("%H:%M")
-    #if current_time >= "8:30" and current_time < "15:30":
-    run_bot()
-    #if current_time == "5:00" and current_time<"6:00":
-        #doAnalysis()
+    is_saturday = datetime.now().weekday() == 5
+    is_sunday = datetime.now().weekday() == 6
+    if current_time >= "20:16" and current_time < "20:30" and not(is_saturday or is_sunday):
+        run_bot()
+    else:
+        print("non trading hours/day")
+    if current_time >= "5:00" and current_time<"6:00":
+        print("doing analysis")
+        doAnalysis()
     time.sleep(60)
