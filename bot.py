@@ -9,25 +9,26 @@ buyPrice = 0
 sellPrice = 0
 shares = 0
 money = 100
-
 def run_bot():
     global bought, buyPrice, sellPrice, stockBought, money, shares
     if bought:
         try:
                 ticker = yf.download(stockBought, period='1d', interval='1m', progress=False)
                 high = float(ticker.iloc[-1]['Adj Close'])
-                if sellPrice>= high:
-                    money = shares * sellPrice
+                if sellPrice<= high:
+                    money = shares * high
                     stockBought = ""
                     bought = False
                     buyPrice = 0
                     sellPrice = 0
+                else:
+                    print("current price", high, "sell price", sellPrice)
         except Exception as e:
             print(e)
     else:
         current_time = datetime.now().strftime("%H:%M")
-        #if current_time >= "7:00" and current_time<"7:03":
-        analyze()
+        if current_time >= "7:00" and current_time<"7:03":
+            analyze()
         for stock in goodForBuy:
             try:
                 ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
@@ -62,7 +63,7 @@ def analyze():
         print(e)
 
         
-
+analyze()
 while True:
     current_time = datetime.now().strftime("%H:%M")
     #if current_time >= "8:30" and current_time < "15:30":
