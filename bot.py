@@ -69,7 +69,7 @@ tradingHourStart = datetime.now().replace(hour=8, minute=30).strftime("%H:%M")
 tradingHourEnd = datetime.now().replace(hour=15, minute=30).strftime("%H:%M")
 analysisTimeStart = datetime.now().replace(hour=5, minute=00).strftime("%H:%M")
 analysisTimeEnd = datetime.now().replace(hour=6, minute=0).strftime("%H:%M")
-        
+hasPrinted = False
 analyze()
 while True:
     current_time = datetime.now().strftime("%H:%M")
@@ -77,8 +77,11 @@ while True:
     is_sunday = datetime.now().weekday() == 6
     if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
         run_bot()
+        hasPrinted = False
     else:
-        print("non trading hours/day")
+        if not(hasPrinted):
+            print("non trading hours/day")
+            hasPrinted = True
     if current_time >= analysisTimeStart and current_time<analysisTimeEnd:
         print("doing analysis")
         doAnalysis()
