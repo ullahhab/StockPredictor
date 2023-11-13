@@ -75,8 +75,6 @@ while True:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
-    print(current_time >= tradingHourStart)
-    print(current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday))
     if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
         run_bot()
     else:
