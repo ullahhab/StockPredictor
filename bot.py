@@ -14,7 +14,7 @@ def run_bot():
     if bought:
         try:
                 ticker = yf.download(stockBought, period='1d', interval='1m', progress=False)
-                high = float(ticker.iloc[-1]['Adj Close'])
+                high = float(ticker.iloc[-1]['Close'])
                 if sellPrice<= high:
                     money = shares * high
                     stockBought = ""
@@ -29,12 +29,14 @@ def run_bot():
         current_time = datetime.now().strftime("%H:%M")
         if current_time >= "7:00" and current_time<"7:03":
             analyze()
+        print("Looking for buying options")
         for stock in goodForBuy:
             try:
                 ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
-                low = float(ticker.iloc[-1]['Adj Close'])
+                low = float(ticker.iloc[-1]['Close'])
+                print(stock[0], low)
                 if float(stock[2])>=low:
-                    print("stock buy Price",stock[2], "Current Stock Price", low)
+                    print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low)
                     bought = True
                     buyPrice = low
                     sellPrice = low+float(stock[1])
@@ -63,17 +65,23 @@ def analyze():
     except Exception as e:
         print(e)
 
+tradingHourStart = datetime.now().replace(hour=8, minute=30).strftime("%H:%M")
+tradingHourEnd = datetime.now().replace(hour=15, minute=30).strftime("%H:%M")
+analysisTimeStart = datetime.now().replace(hour=5, minute=00).strftime("%H:%M")
+analysisTimeEnd = datetime.now().replace(hour=6, minute=0).strftime("%H:%M")
         
 analyze()
 while True:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
-    if current_time >= "8:30" and current_time < "15:30" and not(is_saturday or is_sunday):
+    print(current_time >= tradingHourStart)
+    print(current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday))
+    if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
         run_bot()
     else:
         print("non trading hours/day")
-    if current_time >= "5:00" and current_time<"6:00":
+    if current_time >= analysisTimeStart and current_time<analysisTimeEnd:
         print("doing analysis")
         doAnalysis()
     time.sleep(60)
