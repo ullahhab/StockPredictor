@@ -22,7 +22,7 @@ def run_bot():
                     buyPrice = 0
                     sellPrice = 0
                 else:
-                    print("current price", high, "sell price", sellPrice)
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice)
         except Exception as e:
             print(e)
     else:
