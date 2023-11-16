@@ -2,6 +2,8 @@ from datetime import datetime
 from stockPred import *
 import time
 import yfinance as yf
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 bought = False
 stockBought = ""
 goodForBuy = []
@@ -9,12 +11,14 @@ buyPrice = 0
 sellPrice = 0
 shares = 0
 money = 100
+value = 0 
 def run_bot():
-    global bought, buyPrice, sellPrice, stockBought, money, shares
+    global bought, buyPrice, sellPrice, stockBought, money, shares, value
     if bought:
         try:
-                ticker = yf.download(stockBought, period='1d', interval='1m', progress=False)
+                ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
                 high = float(ticker.iloc[-1]['Close'])
+                value = shares*high
                 if sellPrice<= high:
                     money = shares * high
                     stockBought = ""
@@ -22,13 +26,10 @@ def run_bot():
                     buyPrice = 0
                     sellPrice = 0
                 else:
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice)
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "value ", value)
         except Exception as e:
             print(e)
     else:
-        current_time = datetime.now().strftime("%H:%M")
-        if current_time >= "7:00" and current_time<"7:03":
-            analyze()
         print("Looking for buying options")
         for stock in goodForBuy:
             try:
@@ -65,11 +66,16 @@ def analyze():
     except Exception as e:
         print(e)
 
-tradingHourStart = datetime.now().replace(hour=8, minute=30).strftime("%H:%M")
+
+
+tradingHourStart = datetime.now().replace(hour=7, minute=30).strftime("%H:%M")
 tradingHourEnd = datetime.now().replace(hour=15, minute=30).strftime("%H:%M")
-analysisTimeStart = datetime.now().replace(hour=5, minute=00).strftime("%H:%M")
-analysisTimeEnd = datetime.now().replace(hour=6, minute=0).strftime("%H:%M")
+analysisTimeStart = datetime.now().replace(hour=6, minute=10).strftime("%H:%M")
+analysisTimeEnd = datetime.now().replace(hour=6, minute=30).strftime("%H:%M")
+analyzeTimeStart = datetime.now().replace(hour=7, minute=15).strftime("%H:%M")
+analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
+
 analyze()
 while True:
     current_time = datetime.now().strftime("%H:%M")
@@ -82,7 +88,10 @@ while True:
         if not(hasPrinted):
             print("non trading hours/day")
             hasPrinted = True
-    if current_time >= analysisTimeStart and current_time<analysisTimeEnd:
+    if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
         print("doing analysis")
         doAnalysis()
+    if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
+        print("Analyzing stock")
+        analyze()
     time.sleep(60)

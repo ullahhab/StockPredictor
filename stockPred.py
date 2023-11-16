@@ -76,8 +76,8 @@ def getTicker():
                     weekend += abs(row['High']- row['Low'])
                     avglow += row['Low']
                     avghigh += row['High']
-                    dailyAvgPrice+= row['Adj Close']
-                    weeklyPrice +=row['Adj Close']
+                    dailyAvgPrice+= row['Close']
+                    weeklyPrice +=row['Close']
                     if(row['High']> highest):
                         highest = row['High']
                     if(row['Low']< lowest):
@@ -89,11 +89,11 @@ def getTicker():
                         weekend = 0
                         weeklyPrice = 0
                     dailyCount+=1
-                    if (row['Adj Close']- prev <0):
-                        negative.append(abs(row['Adj Close']-prev) /prev)
+                    if (row['Close']- prev <0):
+                        negative.append(abs(row['Close']-prev) /prev)
                     else:
-                        positive.append((row['Adj Close']-prev) / prev)
-                    prev = row['Adj Close']
+                        positive.append((row['Close']-prev) / prev)
+                    prev = row['Close']
                 dailyavgChange = dailyavgChange/dailyCount
                 dailyAvgPrice = dailyAvgPrice/dailyCount
                 avglow = avglow/dailyCount
@@ -112,7 +112,7 @@ def getTicker():
                 else:
                     Rating = "Normal"
                 if dailyavgChange / row['Low'] >= 0.15:
-                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Adj Close'])+"\n")
+                    file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Close'])+"\n")
             except Exception as e:
                 print(e)
             finally:
