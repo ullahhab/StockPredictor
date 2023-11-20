@@ -37,7 +37,7 @@ def run_bot():
                 low = float(ticker.iloc[-1]['Close'])
                 print(stock[0], low)
                 if float(stock[2])>=low:
-                    print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low)
+                    print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", money)
                     bought = True
                     buyPrice = low
                     sellPrice = low+float(stock[1])
@@ -84,14 +84,15 @@ while True:
     if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
         run_bot()
         hasPrinted = False
+    elif current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
+        print("Analyzing stock")
+        analyze()
+    elif current_time >= analysisTimeStart and current_time < analysisTimeEnd:
+        print("doing analysis")
+        doAnalysis()
     else:
         if not(hasPrinted):
             print("non trading hours/day")
             hasPrinted = True
-    if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
-        print("doing analysis")
-        doAnalysis()
-    if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
-        print("Analyzing stock")
-        analyze()
+    
     time.sleep(60)
