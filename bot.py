@@ -10,15 +10,15 @@ def seperate(value):
     return value.split("=")[1].strip(" ")
 
 botInfoRead = open('botinfo.txt', 'r')
-botInfoRead = botInfoRead.read().split('\n')
-bought = botInfoRead[0].split('=')[1].strip(" ")=="True"
+botInfo = botInfoRead.read().split('\n')
+bought = botInfo[0].split('=')[1].strip(" ")=="True"
 if bought:
-    stockBought = seperate(botInfoRead[1])
-    buyPrice = float(seperate(botInfoRead[2]))
-    sellPrice = float(seperate(botInfoRead[3]))
-    shares = float(seperate(botInfoRead[4]))
-    money = float(seperate(botInfoRead[5]))
-    value = float(seperate(botInfoRead[6]))
+    stockBought = seperate(botInfo[1])
+    buyPrice = float(seperate(botInfo[2]))
+    sellPrice = float(seperate(botInfo[3]))
+    shares = float(seperate(botInfo[4]))
+    money = float(seperate(botInfo[5]))
+    value = float(seperate(botInfo[6]))
 else:
     stockBought = ""
     buyPrice = 0
@@ -103,21 +103,21 @@ while True:
     if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
         run_bot()
         hasPrinted = False
-    elif current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
-        print("Analyzing stock")
-        try:
-            analyze()
-        except Exception as e:
-            print(e)
-    elif current_time >= analysisTimeStart and current_time < analysisTimeEnd:
+    else:
+        if not(hasPrinted):
+            print("non trading hours/day")
+            hasPrinted = True
+    if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
         print("doing analysis")
         try:
             doAnalysis()
         except Exception as e:
             print(e)
-    else:
-        if not(hasPrinted):
-            print("non trading hours/day")
-            hasPrinted = True
+    if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
+        print("Analyzing stock")
+        try:
+            analyze()
+        except Exception as e:
+            print(e)
     
     time.sleep(60)
