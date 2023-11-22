@@ -24,7 +24,7 @@ else:
     buyPrice = 0
     sellPrice = 0
     shares = 0
-    money = float(seperate(botInfoRead[5]))
+    money = float(seperate(botInfo[5]))
     value = 0
 botInfoRead.close()
 def run_bot():
@@ -55,6 +55,7 @@ def run_bot():
                 low = float(ticker.iloc[-1]['Close'])
                 print(stock[0], low)
                 if float(stock[2])>=low:
+                    botInfoWrite = open("botinfo.txt", 'w')
                     print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", money)
                     bought = True
                     buyPrice = low
@@ -63,6 +64,7 @@ def run_bot():
                     shares = money / low
                     print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
                     botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+'\n')
+                    botInfoWrite.close()
                     break
             except Exception as e:
                 print(e)
@@ -95,7 +97,10 @@ analyzeTimeStart = datetime.now().replace(hour=7, minute=15).strftime("%H:%M")
 analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
 
+
+doAnalysis()
 analyze()
+
 while True:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
