@@ -1,2 +1,7 @@
-bought = False
-, buyPrice, sellPrice, stockBought, money, shares
+bought = True
+stockBought =0
+buyPrice =0
+sellPrice =0
+shares =0
+money =0
+value =0

@@ -4,14 +4,29 @@ import time
 import yfinance as yf
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-bought = False
-stockBought = ""
 goodForBuy = []
-buyPrice = 0
-sellPrice = 0
-shares = 0
-money = 100
-value = 0 
+
+def seperate(value):
+    return value.split("=")[1].strip(" ")
+
+botInfoRead = open('botinfo.txt', 'r')
+botInfoRead = botInfoRead.read().split('\n')
+bought = botInfoRead[0].split('=')[1].strip(" ")=="True"
+if bought:
+    stockBought = seperate(botInfoRead[1])
+    buyPrice = seperate(botInfoRead[2])
+    sellPrice = seperate(botInfoRead[3])
+    shares = seperate(botInfoRead[4])
+    money = seperate(botInfoRead[5])
+    value = seperate(botInfoRead[6])
+else:
+    stockBought = ""
+    buyPrice = 0
+    sellPrice = 0
+    shares = 0
+    money = seperate(botInfoRead[5])
+    value = 0
+botInfoRead.close()
 def run_bot():
     global bought, buyPrice, sellPrice, stockBought, money, shares, value
     if bought:
@@ -20,11 +35,14 @@ def run_bot():
                 high = float(ticker.iloc[-1]['Close'])
                 value = shares*high
                 if sellPrice<= high:
+                    botInfoWrite = open("botinfo.txt", 'w')
                     money = shares * high
                     stockBought = ""
                     bought = False
                     buyPrice = 0
                     sellPrice = 0
+                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 ")
+                    botInfoWrite.close()
                 else:
                     print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "value ", value)
         except Exception as e:
@@ -44,6 +62,7 @@ def run_bot():
                     stockBought = stock[0]
                     shares = money / low
                     print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
+                    botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+'\n')
                     break
             except Exception as e:
                 print(e)
@@ -86,10 +105,16 @@ while True:
         hasPrinted = False
     elif current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
         print("Analyzing stock")
-        analyze()
+        try:
+            analyze()
+        except Exception as e:
+            print(e)
     elif current_time >= analysisTimeStart and current_time < analysisTimeEnd:
         print("doing analysis")
-        doAnalysis()
+        try:
+            doAnalysis()
+        except Exception as e:
+            print(e)
     else:
         if not(hasPrinted):
             print("non trading hours/day")
