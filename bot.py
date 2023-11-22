@@ -14,17 +14,17 @@ botInfoRead = botInfoRead.read().split('\n')
 bought = botInfoRead[0].split('=')[1].strip(" ")=="True"
 if bought:
     stockBought = seperate(botInfoRead[1])
-    buyPrice = seperate(botInfoRead[2])
-    sellPrice = seperate(botInfoRead[3])
-    shares = seperate(botInfoRead[4])
-    money = seperate(botInfoRead[5])
-    value = seperate(botInfoRead[6])
+    buyPrice = float(seperate(botInfoRead[2]))
+    sellPrice = float(seperate(botInfoRead[3]))
+    shares = float(seperate(botInfoRead[4]))
+    money = float(seperate(botInfoRead[5]))
+    value = float(seperate(botInfoRead[6]))
 else:
     stockBought = ""
     buyPrice = 0
     sellPrice = 0
     shares = 0
-    money = seperate(botInfoRead[5])
+    money = float(seperate(botInfoRead[5]))
     value = 0
 botInfoRead.close()
 def run_bot():
