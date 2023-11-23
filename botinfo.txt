@@ -1,4 +1,4 @@
-bought = True
+bought = False
 stockBought = AONCW
 buyPrice = 0.2199999988079071
 sellPrice = 0.25999999046325684
