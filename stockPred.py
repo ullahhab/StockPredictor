@@ -22,6 +22,7 @@ def getSymbl():
     for line in read:
         #stocklst.append(line.split(',')[0])
         stocklst +=line.split(',')[0]+" "
+    file.close()
         
 
 def getTicker():
@@ -35,14 +36,14 @@ def getTicker():
         print(test)
         print(ticker.history(period='1mo'))
     """
-    stocklst = stocklst.split()
-    total = len(stocklst)
+    stocklstP = stocklst.split()
+    total = len(stocklstP)
     onePerc = int(total*0.01)
     print(onePerc, total)
     counter = 1
     perc = 0
-    with tqdm(total=len(stocklst), desc="Analysing Stocks") as pbar:
-        for stock in stocklst:
+    with tqdm(total=len(stocklstP), desc="Analysing Stocks") as pbar:
+        for stock in stocklstP:
             try:
                 if '^' in stock:
                     stock = stock[:stock.index("^")]
@@ -121,6 +122,7 @@ def getTicker():
         
 
 def doAnalysis():
+    global data, stocklst
     getTicker()
     file = open("stocks.csv", 'r')
     header = file.readline()
@@ -139,7 +141,8 @@ def doAnalysis():
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
     file.close()
     stockSugg.close()
-
+    stocklst = ''
+    data = ""
 
 
 
