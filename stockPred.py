@@ -137,6 +137,8 @@ def doAnalysis():
             initial+=500
         stockSugg.write(stock[0]+", "+stock[2]+", "+stock[3]+", "+stock[5]+", "+stock[11]+", "+stock[10]+'\n')
     stockSugg.write("Total = "+str(initial/1000000)+"million\n")
+    file.close()
+    stockSugg.close()
 
 
 
