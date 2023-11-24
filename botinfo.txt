@@ -1,7 +1,7 @@
 bought = True
-stockBought = AONCW
-buyPrice = 0.2199999988079071
-sellPrice = 0.25999999046325684
-shares = 454.5454570084564
-money = 100.0
-value =0
+ stockBought = MNTSW
+buyPrice = 0.010499999858438969
+sellPrice = 0.01850000023841858
+shares = 11255.411055299332
+money = 118.18181448731539
+value =118.18181448731539

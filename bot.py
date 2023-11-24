@@ -110,6 +110,7 @@ while True:
         hasPrinted = False
     else:
         if not(hasPrinted):
+            
             print("non trading hours/day")
             hasPrinted = True
     if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
