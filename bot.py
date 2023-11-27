@@ -15,6 +15,7 @@ def seperate(value):
 if not(os.path.exists('./botinfo.txt')):
     file = open('botinfo.txt', 'w')
     file.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = 100\nvalue = 0 ")
+    file.close()
 if not(os.path.exists('./tmpFile.txt')):
     run()
 
