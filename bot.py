@@ -4,10 +4,19 @@ import time
 import yfinance as yf
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import os
+from stockListCleaner import *
+
 goodForBuy = []
 
 def seperate(value):
     return value.split("=")[1].strip(" ")
+
+if not(os.path.exists('./botinfo.txt')):
+    file = open('botinfo.txt', 'w')
+    file.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = 100\nvalue = 0 ")
+if not(os.path.exists('./tmpFile.txt')):
+    run()
 
 botInfoRead = open('botinfo.txt', 'r')
 botInfo = botInfoRead.read().split('\n')
@@ -59,7 +68,7 @@ def run_bot():
                     print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", money)
                     bought = True
                     buyPrice = low
-                    sellPrice = low+float(stock[1])
+                    sellPrice = low+(float(stock[1])/2)
                     stockBought = stock[0]
                     shares = money / low
                     print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
@@ -128,7 +137,7 @@ while True:
                     line = line.split(',')
                     print(line)
                     if line[0].strip(" ") == stockBought:
-                        sellPrice = float(line[1])+buyPrice
+                        sellPrice = (float(line[1])/2)+buyPrice
                         print(sellPrice)
     if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
         print("Analyzing stock")
