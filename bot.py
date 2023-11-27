@@ -110,7 +110,7 @@ while True:
         hasPrinted = False
     else:
         if not(hasPrinted):
-            
+
             print("non trading hours/day")
             hasPrinted = True
     if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
@@ -119,11 +119,21 @@ while True:
             doAnalysis()
         except Exception as e:
             print(e)
+        finally:
+            if bought:
+                file = open('stocks.csv', 'r')
+                header = file.readline()
+                fileR = file.read().split('\n')
+                for line in fileR:
+                    line = line.split(',')
+                    print(line)
+                    if line[0].strip(" ") == stockBought:
+                        sellPrice = float(line[1])+buyPrice
+                        print(sellPrice)
     if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
         print("Analyzing stock")
         try:
             analyze()
         except Exception as e:
             print(e)
-    
     time.sleep(60)
