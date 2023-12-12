@@ -3,9 +3,8 @@ from stockPred import *
 import time
 import yfinance as yf
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import os
-from stockListCleaner import *
+#from stockListCleaner import *
 
 goodForBuy = []
 
@@ -16,8 +15,9 @@ if not(os.path.exists('./botinfo.txt')):
     file = open('botinfo.txt', 'w')
     file.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = 100\nvalue = 0 ")
     file.close()
-if not(os.path.exists('./tmpFile.txt')):
-    run()
+#if not(os.path.exists('./tmpFile.txt')):
+    #print("file doesn't exist")
+    #run()
 
 botInfoRead = open('botinfo.txt', 'r')
 botInfo = botInfoRead.read().split('\n')
@@ -26,6 +26,7 @@ if bought:
     stockBought = seperate(botInfo[1])
     buyPrice = float(seperate(botInfo[2]))
     sellPrice = float(seperate(botInfo[3]))
+    sellNegative = buyPrice-(buyPrice*0.1)
     shares = float(seperate(botInfo[4]))
     money = float(seperate(botInfo[5]))
     value = float(seperate(botInfo[6]))
@@ -36,15 +37,16 @@ else:
     shares = 0
     money = float(seperate(botInfo[5]))
     value = 0
+    sellNegative = 0
 botInfoRead.close()
 def run_bot():
-    global bought, buyPrice, sellPrice, stockBought, money, shares, value
+    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative
     if bought:
         try:
                 ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
                 high = float(ticker.iloc[-1]['Close'])
                 value = shares*high
-                if sellPrice<= high:
+                if sellPrice<= high or sellNegative>=high:
                     botInfoWrite = open("botinfo.txt", 'w')
                     money = shares * high
                     stockBought = ""
@@ -54,13 +56,18 @@ def run_bot():
                     botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 ")
                     botInfoWrite.close()
                 else:
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "value ", value)
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "Stop loss price",sellNegative,"value ", value)
         except Exception as e:
             print(e)
     else:
         print("Looking for buying options")
+        randomList = []
         for stock in goodForBuy:
             try:
+                num = random.randint(0, len(goodForBuy)-1)
+                while num in randomList:
+                    num = random.randint(0, len(goodForBuy)-1)
+                stock = goodForBuy[num]
                 ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
                 low = float(ticker.iloc[-1]['Close'])
                 print(stock[0], low)
@@ -72,6 +79,7 @@ def run_bot():
                     sellPrice = low+(float(stock[1])/2)
                     stockBought = stock[0]
                     shares = money / low
+                    sellNegative = buyPrice - (buyPrice * 0.1)
                     print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
                     botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+'\n')
                     botInfoWrite.close()
@@ -100,15 +108,15 @@ def analyze():
 
 
 tradingHourStart = datetime.now().replace(hour=7, minute=30).strftime("%H:%M")
-tradingHourEnd = datetime.now().replace(hour=15, minute=30).strftime("%H:%M")
+tradingHourEnd = datetime.now().replace(hour=19, minute=50).strftime("%H:%M")
 analysisTimeStart = datetime.now().replace(hour=6, minute=10).strftime("%H:%M")
 analysisTimeEnd = datetime.now().replace(hour=6, minute=30).strftime("%H:%M")
 analyzeTimeStart = datetime.now().replace(hour=7, minute=15).strftime("%H:%M")
 analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
+print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
-
-doAnalysis()
+#doAnalysis()
 analyze()
 
 while True:
@@ -136,7 +144,6 @@ while True:
                 fileR = file.read().split('\n')
                 for line in fileR:
                     line = line.split(',')
-                    print(line)
                     if line[0].strip(" ") == stockBought:
                         sellPrice = (float(line[1])/2)+buyPrice
                         print(sellPrice)
