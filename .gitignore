@@ -1,7 +1,8 @@
-/data
-/dist
-/build
-/stockPred.spec
-/StockSuggestion.csv
-/stocks.csv
-/botinfo.txt
+./data
+./dist
+./build
+./stockPred.spec
+./StockSuggestion.csv
+./stocks.csv
+./botinfo.txt
+./tmpFile.txt

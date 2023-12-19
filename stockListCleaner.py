@@ -1,6 +1,5 @@
 
 import yfinance as yf
-
 def run():
     stocklst = open("stocksList.csv", 'r')
     firtsLine = stocklst.readline()
