@@ -1,7 +1,8 @@
 bought = True
-stockBought = ESGLW
-buyPrice = 0.003000000026077032
-sellPrice = 0.003650000086054206
-shares = 192542.62944277446
-money = 577.6278933492637
-value =577.6278933492637
+stockBought = GMGI
+buyPrice = 2.3450000286102295
+sellPrice = 2.44
+shares = 42.0
+money = 100.0
+value =0
+orderId =fe79e120-9e24-4aa4-bdbf-e5f6c1e5eb61

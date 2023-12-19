@@ -19,25 +19,53 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                             order_class='bracket',
                             stop_loss=dict(
                                 stop_price=stop_loss_price,
-                                limit_price=stop_loss_price - 0.1,  # Optional: Set a limit price for the stop-loss
+                                limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
                             ),
                             take_profit=dict(
                                 limit_price=take_profit_price,
                             )
                         )
+    tries = 1
     while True:
-        time.sleep(1)
+        time.sleep(10)
         updated_order = api.get_order(order.id)
-        print(updated_order.status)
         if updated_order.status == 'filled' or updated_order.status == 'accepted':
-            return 200
-        else:
-            return 500
+            print("Order has been excecuted")
+            print("Making sure the sell order has been put", "before =", order.id)
+
+            while True:
+                for order in api.list_orders():
+                    print(f"Order ID: {order.id}")
+                    print(f"Symbol: {order.symbol}")
+                    print(f"Quantity: {order.qty}")
+                    print(f"Side: {order.side}")
+                    print(f"Type: {order.type}")
+                    print(f"Status: {order.status}")
+                    print(f"Limit Price: {order.limit_price}")
+                    print(f"Stop Price: {order.stop_price}")
+                    print(f"Filled Qty: {order.filled_qty}")
+                    print(f"Submitted At: {order.submitted_at}")
+                    if order.side == "sell" and order.symbol == symbol and order.type == "limit":
+                        break
+                if order.side == "sell" and order.symbol == symbol and order.type == "limit":
+                    break
+            print("sell has been put with ID", "after =", order.id)
+            return 200, order.id
+        elif updated_order.status == 'rejected' or updated_order.status == 'canceled':
+            print("Order has been rejected")
+            return 500, order.id
+        if tries >=5:
+            print("issues putting the order")
+            return 500, order.id
+        if updated_order.status != 'new':
+            tries+=1
+        
 def ChangeOrderStatus(id):
     updated_order = api.get_order(id)
     print(updated_order.status)
     if updated_order.status == 'filled':
         #Change the files
-        pass
+        return True
+    return False
 
 

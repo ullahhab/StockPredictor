@@ -5,6 +5,8 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import os
 #from stockListCleaner import *
+from alapacaAPI import limitTakeProfitStopLoss as putOrder
+from alapacaAPI import ChangeOrderStatus as orderStatus
 
 goodForBuy = []
 
@@ -30,6 +32,7 @@ if bought:
     shares = float(seperate(botInfo[4]))
     money = float(seperate(botInfo[5]))
     value = float(seperate(botInfo[6]))
+    orderId = seperate(botInfo[7])
 else:
     stockBought = ""
     buyPrice = 0
@@ -38,15 +41,16 @@ else:
     money = float(seperate(botInfo[5]))
     value = 0
     sellNegative = 0
+    orderId = 0
 botInfoRead.close()
 def run_bot():
-    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative
+    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative, orderId
     if bought:
         try:
                 ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
                 high = float(ticker.iloc[-1]['Close'])
                 value = shares*high
-                if sellPrice<= high or sellNegative>=high:
+                '''if sellPrice<= high or sellNegative>=high:
                     botInfoWrite = open("botinfo.txt", 'w')
                     money = shares * high
                     stockBought = ""
@@ -55,8 +59,13 @@ def run_bot():
                     sellPrice = 0
                     botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 ")
                     botInfoWrite.close()
-                else:
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "Stop loss price",sellNegative,"value ", value)
+                else:'''
+                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "Stop loss price",sellNegative,"value ", value)
+                if orderStatus(orderId):
+                    botInfoWrite = open("botinfo.txt", 'w')
+                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
+                    botInfoWrite.close()
+                    
         except Exception as e:
             print(e)
     else:
@@ -71,19 +80,23 @@ def run_bot():
                 ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
                 low = float(ticker.iloc[-1]['Close'])
                 print(stock[0], low)
-                if float(stock[2])>=low:
-                    botInfoWrite = open("botinfo.txt", 'w')
+                if round(float(stock[2]), 2) >=low:
                     print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", money)
-                    bought = True
                     buyPrice = low
-                    sellPrice = low+(float(stock[1])/2)
+                    sellPrice = round((low+(float(stock[1])/2)),2)
                     stockBought = stock[0]
-                    shares = money / low
-                    sellNegative = buyPrice - (buyPrice * 0.1)
-                    print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
-                    botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+'\n')
-                    botInfoWrite.close()
-                    break
+                    shares = money // low
+                    sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
+                    print("Sanity check", sellPrice, stockBought, shares, sellNegative)
+                    status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                    print(status)
+                    if status == 200:
+                        botInfoWrite = open("botinfo.txt", 'w')
+                        print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
+                        botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
+                        botInfoWrite.close()
+                        bought = True
+                        break
             except Exception as e:
                 print(e)
         
