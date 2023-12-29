@@ -1,8 +1,8 @@
-bought = True
-stockBought = GMGI
-buyPrice = 2.3450000286102295
-sellPrice = 2.44
-shares = 42.0
+bought = False
+stockBought = PRZO
+buyPrice = 1.0901000499725342
+sellPrice = 1.21
+shares = 91.0
 money = 100.0
-value =0
-orderId =fe79e120-9e24-4aa4-bdbf-e5f6c1e5eb61
+value =93.4829992055893
+orderId =bdb7f49e-ab0f-4dc3-b6cb-e705725a3adf

@@ -7,8 +7,14 @@ import os
 #from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
 from alapacaAPI import ChangeOrderStatus as orderStatus
+from UI import inputUI
+import tkinter as tk
+from tkinter import ttk
+import random
 
+last5 = [0,0,0,0,0]
 goodForBuy = []
+counter = 0
 
 def seperate(value):
     return value.split("=")[1].strip(" ")
@@ -20,6 +26,13 @@ if not(os.path.exists('./botinfo.txt')):
 #if not(os.path.exists('./tmpFile.txt')):
     #print("file doesn't exist")
     #run()
+
+def updateLastOrder(order):
+    global last5, counter
+    if counter >= 5:
+        counter=0
+    last5[counter] = order
+    counter+=1
 
 botInfoRead = open('botinfo.txt', 'r')
 botInfo = botInfoRead.read().split('\n')
@@ -33,18 +46,25 @@ if bought:
     money = float(seperate(botInfo[5]))
     value = float(seperate(botInfo[6]))
     orderId = seperate(botInfo[7])
+    updateLastOrder(stockBought)
+    print(last5)
 else:
     stockBought = ""
     buyPrice = 0
     sellPrice = 0
     shares = 0
-    money = float(seperate(botInfo[5]))
     value = 0
     sellNegative = 0
     orderId = 0
+    root = tk.Tk()
+    inputui = inputUI(root)
+    inputui.startUI()
+    root.mainloop()
+    money = inputui.getValue()
+    print(money)
 botInfoRead.close()
 def run_bot():
-    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative, orderId
+    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative, orderId, last5
     if bought:
         try:
                 ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
@@ -65,6 +85,7 @@ def run_bot():
                     botInfoWrite = open("botinfo.txt", 'w')
                     botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
                     botInfoWrite.close()
+                    bought = False
                     
         except Exception as e:
             print(e)
@@ -74,7 +95,7 @@ def run_bot():
         for stock in goodForBuy:
             try:
                 num = random.randint(0, len(goodForBuy)-1)
-                while num in randomList:
+                while num in randomList and goodForBuy[num] in last5:
                     num = random.randint(0, len(goodForBuy)-1)
                 stock = goodForBuy[num]
                 ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
@@ -87,7 +108,7 @@ def run_bot():
                     stockBought = stock[0]
                     shares = money // low
                     sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                    print("Sanity check", sellPrice, stockBought, shares, sellNegative)
+                    print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
                     status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                     print(status)
                     if status == 200:
@@ -96,6 +117,7 @@ def run_bot():
                         botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
                         botInfoWrite.close()
                         bought = True
+                        updateLastOrder(stockBought)
                         break
             except Exception as e:
                 print(e)
