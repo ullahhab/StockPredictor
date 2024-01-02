@@ -1,5 +1,6 @@
 import alpaca_trade_api as tradeapi
 import time
+import datetime
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
 APCA_API_KEY_ID = "PKD8V1TQWBUDC69ELWKM"
 APCA_API_SECRET_KEY = "xE1m8nLhVrOPZK1aFmVpSyrouyhWh8iwb9D2XgX8"
@@ -30,15 +31,26 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
     while True:
         time.sleep(10)
         updated_order = api.get_order(order.id)
-        if updated_order.status == 'filled': #or updated_order.status == 'accepted':
+        temp = order.id
+        if updated_order.status != 'rejected' and updated_order.status != "canceled": #or updated_order.status == 'accepted':
             print("Order has been excecuted")
             print("Making sure the sell order has been put", "before =", order.id)
-
+            print("updated", updated_order.id)
             while True:
-                for order in api.list_orders():
-                    if order.side == "sell" and order.symbol == symbol and order.type == "limit":
+                time.sleep(10)
+                for order in api.list_orders(status='all'):
+                    if symbol == order.symbol:
+                        print(f"Order ID: {order.id}")
+                        print(f"Symbol: {order.symbol}")
+                        print(f"Qty: {order.qty}")
+                        print(f"Side: {order.side}")
+                        print(f"Type: {order.type}")
+                        print(f"Status: {order.status}")
+                        print("------")
+                        print(getNeg(order))
+                    if (order.side == "sell") and (order.symbol == symbol) and (order.type == "limit"):
                         break
-                if order.side == "sell" and order.symbol == symbol and order.type == "limit":
+                if (order.side == "sell") and (order.symbol == symbol) and (order.type == "limit"):
                     break
             print("sell has been put with ID", "after =", order.id)
             return 200, order.id
@@ -54,14 +66,29 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
 def ChangeOrderStatus(id):
     updated_order = api.get_order(id)
     print(updated_order.status)
-    if updated_order.status == 'filled' or updated_order.status == 'replaced':
+    if updated_order.status == 'filled' or updated_order.status == 'replaced' or updated_order.status == 'canceled':
         #Change the files
         return True
     return False
 
 
 def getOrderId(stock, lst):
-    for order in api.list_orders():
-        if order.side == "sell" and order.symbol == stock and order.type == "limit":
-            lst.append(order.id)
+    for order in api.list_orders(status='all'):
+        if order.status != 'canceled' and order.status != 'rejected' and order.status != 'canceled' and order.status!= 'filled' and order.status != 'replaced':
+            if order.side == "sell" and order.symbol == stock and order.type == "limit":
+                lst.append(order.id)
+for order in api.list_orders(status='all'):
+    if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
+        print(f"Order ID: {order.id}")
+        print(f"Symbol: {order.symbol}")
+        print(f"Qty: {order.qty}")
+        print(f"Side: {order.side}")
+        print(f"Type: {order.type}")
+        print(f"Status: {order.status}")
+        print("------")
 
+
+def getNeg(order):
+    if (order.status!= "replaced") and (order.status!= "pending_replaced") and (order.status!= "pending_cancel") and (order.status!= "canceled") and (order.status!= "expired"):
+        return True
+    return False

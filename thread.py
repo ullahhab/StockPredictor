@@ -5,7 +5,7 @@ from bot import updateLastOrder
 from alapacaAPI import putOrder, ChangeOrderStatus as orderStatus, getOrderId
 from tradingStrat import strat
 
-def buy(num, goodForBuy, last5,sellList, money):
+def buy(num, goodForBuy, last5, sellList, money):
     buyList = []
     buyingPower = strat(money)
     mon = money//buyingPower
@@ -40,9 +40,11 @@ def buy(num, goodForBuy, last5,sellList, money):
                             bought = True
                             sellList.append([stockBought, shares])
                             updateLastOrder(stockBought)
+                            money = money - mon
                             break
                 except Exception as e:
                     print(e)
+    return money
 
 
 
