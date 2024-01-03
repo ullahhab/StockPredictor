@@ -112,7 +112,7 @@ def getTicker():
                     Rating = "OverBought"
                 else:
                     Rating = "Normal"
-                if dailyavgChange / row['Low'] >= 0.05 and row['Close'] > 1:
+                if dailyavgChange / row['Low'] >= 0.05 and row['Close'] > 0.5:
                     file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Close'])+"\n")
             except Exception as e:
                 print(e)

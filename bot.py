@@ -11,10 +11,19 @@ from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
 import random
+import threading
+import random
+import yfinance as yf
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails
+from tradingStrat import strat
+from stockPred import doAnalysis
+
 
 last5 = [0,0,0,0,0]
 goodForBuy = []
 counter = 0
+sellList = []
+buyList = []
 
 def seperate(value):
     return value.split("=")[1].strip(" ")
@@ -63,7 +72,7 @@ else:
     money = inputui.getValue()
     print(money)
 botInfoRead.close()
-def run_bot():
+"""def run_bot():
     global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative, orderId, last5
     if bought:
         try:
@@ -120,10 +129,20 @@ def run_bot():
                         updateLastOrder(stockBought)
                         break
             except Exception as e:
-                print(e)
-        
-        
+                print(e)""" 
+def run_bot():
+    global sellList, goodForBuy, last5
 
+    lock = threading.Lock()
+
+    buyThread = threading.Thread(target=buy, name="buyThread", args=())
+    sellThread = threading.Thread(target=sell, name="sellThread", args=())
+    
+    buyThread.start()
+    sellThread.start()
+
+    buyThread.join()
+    sellThread.join()
 
 def analyze():
     global buyPrice, sellPrice
@@ -139,6 +158,89 @@ def analyze():
         pass
     except Exception as e:
         print(e)
+
+def buy():
+    global goodForBuy, last5, sellList, money
+    mon = 0
+    buyingPower = strat(money)
+    print("buying power", buyingPower)
+    if buyingPower>0:
+        mon = money//buyingPower
+    for bp in range(buyingPower):
+        print(bp, buyingPower)
+        if bp==buyingPower-1:
+            mon = money - (mon*(bp-1))
+        print(mon)
+        randomList = []
+        for stock in goodForBuy:
+                try:
+                    num = random.randint(0, len(goodForBuy)-1)
+                    while num in randomList and goodForBuy[num] in last5:
+                        num = random.randint(0, len(goodForBuy)-1)
+                    stock = goodForBuy[num]
+                    ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
+                    low = float(ticker.iloc[-1]['Close'])
+                    print(stock[0], low)
+                    if round(float(stock[2]), 2) >=low:
+                        print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", mon)
+                        buyPrice = low
+                        sellPrice = round((low+(float(stock[1])/2)),2)
+                        stockBought = stock[0]
+                        shares = mon // low
+                        sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
+                        print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
+                        status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                        print(status)
+                        if status == 200:
+                            #botInfoWrite = open("botinfo.txt", 'w')
+                            print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
+                            #botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(mon)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
+                            #botInfoWrite.close()
+                            bought = True
+                            sellList.append([stockBought, shares])
+                            updateLastOrder(stockBought)
+                            money = money - mon
+                            print("money left", money)
+                            break
+                except Exception as e:
+                    print(e)
+    print(sellList)
+    print(last5)
+
+
+
+def sell():
+    global sellList, shares, money
+    #two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
+    print(sellList, "inside the sell")
+    for stock in sellList:
+        try:
+            if len(stock)>=3:
+                stockBought = stock[0]
+                shares = stock[1]
+                limit_orderId = stock[2]["limitSell"]
+                stop_orderId = stock[2]["Stop_limit"]
+                high, sellPrice = orderDetails(stockBought,limit_orderId)
+                #ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
+                #high = float(ticker.iloc[-1]['Close'])
+                value = shares*high
+                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value)
+                limit_status = orderStatus(limit_orderId)
+                stop_status = orderStatus(stop_orderId)
+                if limit_status == 'filled':
+                    #remove the order from the list, update the money, and update file 
+                    sellList.remove(stock)
+                    money += high * shares
+                    botInfoWrite = open("botinfo.txt", 'w')
+                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
+                    botInfoWrite.close()
+                elif stop_status == "filled":
+                    sellList.remove(stock)
+                    money+= high * shares
+            else:
+                getOrderId(stock[0], stock)
+        except Exception as e:
+            print("error occured", e)
 
 
 
@@ -159,11 +261,10 @@ while True:
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
     if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
-        run_bot()
         hasPrinted = False
+        run_bot()
     else:
         if not(hasPrinted):
-
             print("non trading hours/day")
             hasPrinted = True
     if current_time >= analysisTimeStart and current_time < analysisTimeEnd:

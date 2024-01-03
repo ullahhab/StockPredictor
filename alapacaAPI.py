@@ -24,7 +24,7 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                                 limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
                             ),
                             take_profit=dict(
-                                limit_price=round((take_profit_price - (take_profit_price *0.03)), 2),
+                                limit_price=round((take_profit_price - (take_profit_price *0.01)), 2),
                             )
                         )
     tries = 1
@@ -66,17 +66,22 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
 def ChangeOrderStatus(id):
     updated_order = api.get_order(id)
     print(updated_order.status)
-    if updated_order.status == 'filled' or updated_order.status == 'replaced' or updated_order.status == 'canceled':
         #Change the files
-        return True
-    return False
+    return updated_order.status
 
 
 def getOrderId(stock, lst):
-    for order in api.list_orders(status='all'):
-        if order.status != 'canceled' and order.status != 'rejected' and order.status != 'canceled' and order.status!= 'filled' and order.status != 'replaced':
-            if order.side == "sell" and order.symbol == stock and order.type == "limit":
-                lst.append(order.id)
+    orderIds = {}
+    while len(orderIds)<2:
+        print("looking for orders: Found =", len(orderIds))
+        for order in api.list_orders(status='all'):
+            if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
+                if order.side == "sell" and order.symbol == stock and order.type == "limit":
+                    orderIds["limitSell"] = order.id
+                elif order.side == "sell" and order.symbol == stock and order.type == "stop_limit":
+                    orderIds["Stop_limit"] = order.id
+    
+    lst.append(orderIds)
 for order in api.list_orders(status='all'):
     if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
         print(f"Order ID: {order.id}")
@@ -92,3 +97,8 @@ def getNeg(order):
     if (order.status!= "replaced") and (order.status!= "pending_replaced") and (order.status!= "pending_cancel") and (order.status!= "canceled") and (order.status!= "expired"):
         return True
     return False
+
+def orderDetails(symbl, orderId):
+    order = api.get_latest_trade(symbl)
+    limitPrice = api.get_order(orderId).limit_price
+    return order.price, limitPrice
