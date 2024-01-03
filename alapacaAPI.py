@@ -28,34 +28,17 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                             )
                         )
     tries = 1
+    #########################this will need some modification############################
     while True:
         time.sleep(10)
         updated_order = api.get_order(order.id)
         temp = order.id
         if updated_order.status != 'rejected' and updated_order.status != "canceled": #or updated_order.status == 'accepted':
-            print("Order has been excecuted")
-            print("Making sure the sell order has been put", "before =", order.id)
-            print("updated", updated_order.id)
-            while True:
-                time.sleep(10)
-                for order in api.list_orders(status='all'):
-                    if symbol == order.symbol:
-                        print(f"Order ID: {order.id}")
-                        print(f"Symbol: {order.symbol}")
-                        print(f"Qty: {order.qty}")
-                        print(f"Side: {order.side}")
-                        print(f"Type: {order.type}")
-                        print(f"Status: {order.status}")
-                        print("------")
-                        print(getNeg(order))
-                    if (order.side == "sell") and (order.symbol == symbol) and (order.type == "limit"):
-                        break
-                if (order.side == "sell") and (order.symbol == symbol) and (order.type == "limit"):
-                    break
-            print("sell has been put with ID", "after =", order.id)
-            return 200, order.id
+            print("Order has been sent")
+            print("Order status", updated_order.status)
+            return 200, updated_order.id
         elif updated_order.status == 'rejected' or updated_order.status == 'canceled':
-            print("Order has been rejected")
+            print("Order has been ", updated_order.status)
             return 500, order.id
         if tries >=5:
             print("issues putting the order", order.status)

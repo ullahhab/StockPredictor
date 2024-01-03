@@ -72,64 +72,7 @@ else:
     money = inputui.getValue()
     print(money)
 botInfoRead.close()
-"""def run_bot():
-    global bought, buyPrice, sellPrice, stockBought, money, shares, value,sellNegative, orderId, last5
-    if bought:
-        try:
-                ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
-                high = float(ticker.iloc[-1]['Close'])
-                value = shares*high
-                '''if sellPrice<= high or sellNegative>=high:
-                    botInfoWrite = open("botinfo.txt", 'w')
-                    money = shares * high
-                    stockBought = ""
-                    bought = False
-                    buyPrice = 0
-                    sellPrice = 0
-                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 ")
-                    botInfoWrite.close()
-                else:'''
-                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "Volume", ticker.iloc[-1]['Volume'], "Stop loss price",sellNegative,"value ", value)
-                if orderStatus(orderId):
-                    botInfoWrite = open("botinfo.txt", 'w')
-                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
-                    botInfoWrite.close()
-                    bought = False
-                    
-        except Exception as e:
-            print(e)
-    else:
-        print("Looking for buying options")
-        randomList = []
-        for stock in goodForBuy:
-            try:
-                num = random.randint(0, len(goodForBuy)-1)
-                while num in randomList and goodForBuy[num] in last5:
-                    num = random.randint(0, len(goodForBuy)-1)
-                stock = goodForBuy[num]
-                ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
-                low = float(ticker.iloc[-1]['Close'])
-                print(stock[0], low)
-                if round(float(stock[2]), 2) >=low:
-                    print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", money)
-                    buyPrice = low
-                    sellPrice = round((low+(float(stock[1])/2)),2)
-                    stockBought = stock[0]
-                    shares = money // low
-                    sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                    print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
-                    status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
-                    print(status)
-                    if status == 200:
-                        botInfoWrite = open("botinfo.txt", 'w')
-                        print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
-                        botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(money)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
-                        botInfoWrite.close()
-                        bought = True
-                        updateLastOrder(stockBought)
-                        break
-            except Exception as e:
-                print(e)""" 
+
 def run_bot():
     global sellList, goodForBuy, last5
 
@@ -163,14 +106,12 @@ def buy():
     global goodForBuy, last5, sellList, money
     mon = 0
     buyingPower = strat(money)
-    print("buying power", buyingPower)
     if buyingPower>0:
         mon = money//buyingPower
     for bp in range(buyingPower):
         print(bp, buyingPower)
         if bp==buyingPower-1:
             mon = money - (mon*(bp-1))
-        print(mon)
         randomList = []
         for stock in goodForBuy:
                 try:
@@ -190,7 +131,6 @@ def buy():
                         sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
                         print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
                         status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
-                        print(status)
                         if status == 200:
                             #botInfoWrite = open("botinfo.txt", 'w')
                             print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
