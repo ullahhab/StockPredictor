@@ -22,7 +22,7 @@ from stockPred import doAnalysis
 last5 = [0,0,0,0,0]
 goodForBuy = []
 counter = 0
-sellList = [['MGLD', 103.0, {'limitSell': '2a5a61f0-7eb0-44b5-914d-f46aa2f90778', 'Stop_limit': '377c9b78-5bbb-48e2-9a0b-fe04773598e4'}], ['OCX', 30.0, {'limitSell': '1b186de4-8216-48b0-ba58-cdb7d63f0028', 'Stop_limit': '2d40ea37-a41a-42b2-b770-a23555addbd1'}]]
+sellList = []
 buyList = []
 
 def seperate(value):
@@ -107,11 +107,8 @@ def buy():
     mon = 0
     buyingPower = strat(money)
     if buyingPower>0:
-        mon = money//buyingPower
+        mon = money/buyingPower 
     for bp in range(buyingPower):
-        print(bp, buyingPower)
-        if bp==buyingPower-1:
-            mon = money - (mon*(buyingPower-1))
         randomList = []
         for stock in goodForBuy:
                 try:
@@ -155,7 +152,6 @@ def sell():
     print(sellList, "inside the sell")
     for stock in sellList:
         try:
-            print("debug", stock)
             if len(stock)>=3:
                 stockBought = stock[0]
                 shares = stock[1]

@@ -2,8 +2,8 @@ import alpaca_trade_api as tradeapi
 import time
 import datetime
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
-APCA_API_KEY_ID = "PKD8V1TQWBUDC69ELWKM"
-APCA_API_SECRET_KEY = "xE1m8nLhVrOPZK1aFmVpSyrouyhWh8iwb9D2XgX8"
+APCA_API_KEY_ID = "PK7L6LK63UD41XRYVRQV"
+APCA_API_SECRET_KEY = "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
 
 
 api = tradeapi.REST(key_id=APCA_API_KEY_ID, secret_key=APCA_API_SECRET_KEY, 
@@ -48,8 +48,6 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
         
 def ChangeOrderStatus(id):
     updated_order = api.get_order(id)
-    print(updated_order.status)
-        #Change the files
     return updated_order.status
 
 

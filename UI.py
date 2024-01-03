@@ -16,8 +16,8 @@ class inputUI:
 
         def getAccValue():
             APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
-            APCA_API_KEY_ID = "PKD8V1TQWBUDC69ELWKM"
-            APCA_API_SECRET_KEY = "xE1m8nLhVrOPZK1aFmVpSyrouyhWh8iwb9D2XgX8"
+            APCA_API_KEY_ID = "PK7L6LK63UD41XRYVRQV"
+            APCA_API_SECRET_KEY = "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
             api = tradeapi.REST(APCA_API_KEY_ID, APCA_API_SECRET_KEY, base_url=APCA_API_BASE_URL)
 
             account = api.get_account()
