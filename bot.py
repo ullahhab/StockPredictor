@@ -22,7 +22,7 @@ from stockPred import doAnalysis
 last5 = [0,0,0,0,0]
 goodForBuy = []
 counter = 0
-sellList = []
+sellList = [['MGLD', 103.0, {'limitSell': '2a5a61f0-7eb0-44b5-914d-f46aa2f90778', 'Stop_limit': '377c9b78-5bbb-48e2-9a0b-fe04773598e4'}], ['OCX', 30.0, {'limitSell': '1b186de4-8216-48b0-ba58-cdb7d63f0028', 'Stop_limit': '2d40ea37-a41a-42b2-b770-a23555addbd1'}]]
 buyList = []
 
 def seperate(value):
@@ -111,7 +111,7 @@ def buy():
     for bp in range(buyingPower):
         print(bp, buyingPower)
         if bp==buyingPower-1:
-            mon = money - (mon*(bp-1))
+            mon = money - (mon*(buyingPower-1))
         randomList = []
         for stock in goodForBuy:
                 try:
@@ -155,6 +155,7 @@ def sell():
     print(sellList, "inside the sell")
     for stock in sellList:
         try:
+            print("debug", stock)
             if len(stock)>=3:
                 stockBought = stock[0]
                 shares = stock[1]
@@ -169,14 +170,15 @@ def sell():
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':
                     #remove the order from the list, update the money, and update file 
-                    sellList.remove(stock)
+                    sellList.pop(sellList.index(stock))
                     money += high * shares
                     botInfoWrite = open("botinfo.txt", 'w')
                     botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
                     botInfoWrite.close()
                 elif stop_status == "filled":
-                    sellList.remove(stock)
+                    sellList.pop(sellList.index(stock))
                     money+= high * shares
+                print(money)
             else:
                 getOrderId(stock[0], stock)
         except Exception as e:

@@ -1,8 +1,8 @@
 bought = False
-stockBought = HSDT
-buyPrice = 7.53000020980835
-sellPrice = 7.94
-shares = 132.0
-money = 1000.0
-value =1010.4572775363922
-orderId =fdee4ead-92e6-48b6-92dd-6ba6f63e120b
+stockBought = 
+buyPrice = 0
+sellPrice = 0
+shares = 0
+money = 101.55
+value = 0 
+orderId = 0
