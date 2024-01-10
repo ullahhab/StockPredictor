@@ -51,11 +51,23 @@ class inputUI:
         money_entry = ttk.Entry(self.root)
         money_entry.grid(row=0, column=1, padx=10, pady=10)
 
+        api_label = ttk.Label(self.root, text="Enter API key:")
+        api_label.grid(row=1, column=0, padx=10, pady=10)
+
+        api_entry = ttk.Entry(self.root)
+        api_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        secret_label = ttk.Label(self.root, text="Enter secrets:")
+        secret_label.grid(row=2, column=0, padx=10, pady=10)
+
+        secret_entry = ttk.Entry(self.root)
+        secret_entry.grid(row=2, column=1, padx=10, pady=10)
+
         process_button = ttk.Button(self.root, text="Start Bot", command=process_money)
-        process_button.grid(row=1, column=0, columnspan=2, pady=10)
+        process_button.grid(row=3, column=0, columnspan=2, pady=10)
 
         result_label = ttk.Label(self.root, text="")
-        result_label.grid(row=2, column=0, columnspan=2, pady=10)
+        result_label.grid(row=4, column=0, columnspan=2, pady=10)
 
     def getValue(self):
         return self.value

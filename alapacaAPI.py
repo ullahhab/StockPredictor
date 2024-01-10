@@ -21,7 +21,7 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                             order_class='bracket',
                             stop_loss=dict(
                                 stop_price=stop_loss_price,
-                                limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
+                                #limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
                             ),
                             take_profit=dict(
                                 limit_price=round((take_profit_price - (take_profit_price *0.01)), 2),
@@ -59,9 +59,11 @@ def getOrderId(stock, lst):
             if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
                 if order.side == "sell" and order.symbol == stock and order.type == "limit":
                     orderIds["limitSell"] = order.id
-                elif order.side == "sell" and order.symbol == stock and order.type == "stop_limit":
+                elif order.side == "sell" and order.symbol == stock and (order.type == "stop_limit" or order.type == "stop"):
                     orderIds["Stop_limit"] = order.id
-    
+                elif order.side == "buy" and order.symbol == stock and order.type == 'limit':
+                    orderIds["buy"] = order.id
+    print("found ", len(orderIds), "debug", orderIds)
     lst.append(orderIds)
 for order in api.list_orders(status='all'):
     if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':

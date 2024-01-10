@@ -106,8 +106,10 @@ def buy():
     global goodForBuy, last5, sellList, money
     mon = 0
     buyingPower = strat(money)
-    if buyingPower>0:
-        mon = money/buyingPower 
+    if int(buyingPower)>0:
+        mon = money/buyingPower
+    else:
+        buyingPower = 0
     for bp in range(buyingPower):
         randomList = []
         for stock in goodForBuy:
@@ -141,15 +143,12 @@ def buy():
                             break
                 except Exception as e:
                     print(e)
-    print(sellList)
-    print(last5)
 
 
 
 def sell():
     global sellList, shares, money
     #two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
-    print(sellList, "inside the sell")
     for stock in sellList:
         try:
             if len(stock)>=3:
@@ -174,7 +173,6 @@ def sell():
                 elif stop_status == "filled":
                     sellList.pop(sellList.index(stock))
                     money+= high * shares
-                print(money)
             else:
                 getOrderId(stock[0], stock)
         except Exception as e:
