@@ -1,8 +1,8 @@
 import alpaca_trade_api as tradeapi
 import time
-APCA_API_BASE_URL = "https://api.alpaca.markets"
-APCA_API_KEY_ID = "AKE15BKMSWS6PBU7AFJD"
-APCA_API_SECRET_KEY = "peVzvQfP06j81b9cSOa7E2Ur0lUs7SpUUsDfSHMC"
+APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
+APCA_API_KEY_ID = "PK7L6LK63UD41XRYVRQV"
+APCA_API_SECRET_KEY = "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
 
 
 api = tradeapi.REST(key_id=APCA_API_KEY_ID, secret_key=APCA_API_SECRET_KEY, 
@@ -43,3 +43,6 @@ def getAccInfo():
     print(f"Buying Power: {account.buying_power}")
     print(f"Equity: {account.equity}")
     print(f"Cash: {account.cash}")
+
+
+getAccInfo()

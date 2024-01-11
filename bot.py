@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 #from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
-from alapacaAPI import ChangeOrderStatus as orderStatus
+from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue
 from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
@@ -160,7 +160,8 @@ def sell():
                 #ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
                 #high = float(ticker.iloc[-1]['Close'])
                 value = shares*high
-                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value)
+                
+                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "net value:", accountValue())
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':

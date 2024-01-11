@@ -85,3 +85,6 @@ def orderDetails(symbl, orderId):
     order = api.get_latest_trade(symbl)
     limitPrice = api.get_order(orderId).limit_price
     return order.price, limitPrice
+
+def accountValue():
+    return api.get_account().equity
