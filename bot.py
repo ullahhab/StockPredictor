@@ -115,8 +115,9 @@ def buy():
     global goodForBuy, last5, sellList, money
     mon = 0
     buyingPower = strat(money)
-    if int(buyingPower) > 0:
-        mon = money / buyingPower
+    print(buyingPower)
+    if int(buyingPower)>0:
+        mon = money/buyingPower
     else:
         buyingPower = 0
     for bp in range(buyingPower):
@@ -159,18 +160,19 @@ def sell():
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
         try:
-            if len(stock) >= 3:
-                stockBought = stock[0]
-                shares = stock[1]
+            if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
-                high, sellPrice = orderDetails(stockBought, limit_orderId)
-                # ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
-                # high = float(ticker.iloc[-1]['Close'])
-                value = shares * high
-
-                print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value,
-                      "net value:", accountValue())
+                if orderStatus(stock[2]['buy'])=='filled':
+                    stockBought = stock[0]
+                    shares = stock[1]
+                    high, sellPrice = orderDetails(stockBought,limit_orderId)
+                    #ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
+                    #high = float(ticker.iloc[-1]['Close'])
+                    value = shares*high
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "net value:", accountValue())
+                else:
+                    print("unbought", stock[0])
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':
@@ -203,7 +205,7 @@ print("stop loss price", sellNegative, "Sell positive", sellPrice)
 # doAnalysis()
 analyze()
 
-while True:
+while float(accountValue())>0.0:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
