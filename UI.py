@@ -6,45 +6,49 @@ from matplotlib.animation import FuncAnimation
 from datetime import datetime
 import time
 
+
 class inputUI:
     def __init__(self, root) -> None:
         self.root = root
         self.value = 0
+        self.secret = ""
+        self.key = ""
+
     # Create the main window
     def startUI(self):
         self.root.title("Bot money start")
 
-        def getAccValue():
+        def getAccValue(secret, api):
             APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
-            APCA_API_KEY_ID = "PK7L6LK63UD41XRYVRQV"
-            APCA_API_SECRET_KEY = "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
+            APCA_API_KEY_ID = api #"PK7L6LK63UD41XRYVRQV"
+            APCA_API_SECRET_KEY = secret #"FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
             api = tradeapi.REST(APCA_API_KEY_ID, APCA_API_SECRET_KEY, base_url=APCA_API_BASE_URL)
 
             account = api.get_account()
 
             return account.cash
 
-
         def process_money():
-        # Retrieve the entered money amount from the Entry widget
             money_amount = money_entry.get()
-
+            secret = secret_entry.get()
+            api = api_entry.get()
             try:
                 # Attempt to convert the entered text to a float
                 money_amount = float(money_amount)
-                accValue = float(getAccValue())
+                accValue = float(getAccValue(secret, api))
                 # Process the money amount (you can replace this with your own logic)
                 if accValue >= money_amount:
                     result_label.config(text=f"Money Amount: ${money_amount:.2f} processed successfully")
                     self.value = money_amount
                     self.root.destroy()
                 else:
-                    result_label.config(text=f"Money Amount: ${money_amount:.2f} is greater than account value Account Value: ${accValue:.2f}")
+                    result_label.config(
+                        text=f"Money Amount: ${money_amount:.2f} is greater than account value Account Value: ${accValue:.2f}")
             except ValueError:
                 result_label.config(text="Invalid input. Please enter a valid number.")
 
-
             # Create and place widgets
+
         money_label = ttk.Label(self.root, text="Enter Money Amount:")
         money_label.grid(row=0, column=0, padx=10, pady=10)
 
@@ -71,6 +75,7 @@ class inputUI:
 
     def getValue(self):
         return self.value
-    
 
-    
+    def getSecret(self):
+        return self.key, self.secret
+
