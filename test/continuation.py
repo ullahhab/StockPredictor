@@ -43,7 +43,7 @@ for stock in new:
         time.sleep(1)
         pOrder = orderDetails(order)
         if flag:
-            continuation.append([pOrder.symbol, pOrder.qty])
+            array = [pOrder.symbol, pOrder.qty]
             flag = False
         if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
             print(orderDetails(order).symbol, orderDetails(order).qty, orderDetails(order).type, orderDetails(order).side, orderDetails(order).submitted_at, orderDetails(order).id)
@@ -51,9 +51,19 @@ for stock in new:
                 adder['limit_sell'] = pOrder.id
             elif pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
                 adder['stop_limit'] = pOrder.id
-        continuation[-1].append(adder) 
-                
+    array.append(adder)
+    continuation.append(array)
+for stock in continuation:
+            for order in api.list_orders(status='all'):
+                if order.symbol == stock[0] and order.qty == stock[1] and order.type == 'limit' and order.side == 'buy':
+                    stock[2]['buy'] = order.id 
+#final processing
+                    #Problem adding multiple orders with same array
+pArray = []
+for stock in range(len(continuation)):
+    while len(continuation[stock])>3:
+        #pArray.append([stock[0], stock[1], stock.pop()])
+        continuation[stock].pop()
 
 print(continuation)
-
 

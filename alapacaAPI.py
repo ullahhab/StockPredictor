@@ -53,16 +53,18 @@ def ChangeOrderStatus(id):
 def getOrderId(stock, lst):
     orderIds = {}
     while len(orderIds) < 2:
+        time.sleep(1)
         print("looking for orders: Found =", len(orderIds))
-        for order in api.list_orders(status='all'):
+        orders = api.list_orders(status='all')
+        for order in orders:
             if order.status != 'canceled' and order.status != 'rejected' and order.status != 'filled' and order.status != 'replaced':
                 if order.side == "sell" and order.symbol == stock and order.type == "limit":
                     orderIds["limitSell"] = order.id
                 elif order.side == "sell" and order.symbol == stock and (
                         order.type == "stop_limit" or order.type == "stop"):
                     orderIds["Stop_limit"] = order.id
-                elif order.side == "buy" and order.symbol == stock and order.type == 'limit':
-                    orderIds["buy"] = order.id
+            if order.side == "buy" and order.symbol == stock and order.type == 'limit' and order.status != 'canceled' and order.status != 'rejected' and order.status != 'replaced':
+                orderIds["buy"] = order.id
     print("found ", len(orderIds), "debug", orderIds)
     lst.append(orderIds)
 
@@ -88,3 +90,43 @@ def setSecret(key, secret):
     global api, APCA_API_BASE_URL
     api = tradeapi.REST(key_id=key, secret_key=secret,
                     base_url=APCA_API_BASE_URL, api_version='v2')
+    
+
+def cont():
+    new = {}
+    for stock in api.list_orders(status='all'):
+        if getNeg(stock) and stock.status!='filled':
+            print(stock.symbol, stock.status)
+            if stock.symbol not in new:
+                new[stock.symbol] = [stock.id]
+            else:
+                new[stock.symbol].append(stock.id)
+
+    print(new)
+    continuation = []
+    for stock in new:
+        adder = {}
+        flag = True
+        for order in new[stock]:
+            time.sleep(1)
+            pOrder = orderDetails(order)
+            if flag:
+                array = [pOrder.symbol, pOrder.qty]
+                flag = False
+            if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
+                print(orderDetails(order).symbol, orderDetails(order).qty, orderDetails(order).type, orderDetails(order).side, orderDetails(order).submitted_at, orderDetails(order).id)
+                if pOrder.type == 'limit' and pOrder.side == 'sell':
+                    adder['limit_sell'] = pOrder.id
+                elif pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
+                    adder['stop_limit'] = pOrder.id
+        array.append(adder)
+        continuation.append(array)
+    for stock in continuation:
+            for order in api.list_orders(status='all'):
+                if order.symbol == stock[0] and order.qty == stock[1] and order.type == 'limit' and order.side == 'buy':
+                    stock[2]['buy'] = order.id 
+#final processing
+                    #Problem adding multiple orders with same array
+
+            
+

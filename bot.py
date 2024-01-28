@@ -203,7 +203,7 @@ print("stop loss price", sellNegative, "Sell positive", sellPrice)
 # doAnalysis()
 analyze()
 
-while True:
+while accountValue()>0.0:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
