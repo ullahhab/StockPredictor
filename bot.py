@@ -4,7 +4,7 @@ import time
 import yfinance as yf
 import matplotlib.pyplot as plt
 import os
-#from stockListCleaner import *
+# from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
 from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder
 from UI import inputUI
@@ -14,43 +14,47 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret
 from tradingStrat import strat
 from stockPred import doAnalysis
 
-
-last5 = [0,0,0,0,0]
+last5 = [0, 0, 0, 0, 0]
 goodForBuy = []
 counter = 0
 sellList = []
 buyList = []
 
+
 def seperate(value):
     return value.split("=")[1].strip(" ")
 
-if not(os.path.exists('./botinfo.txt')):
+
+if not (os.path.exists('./botinfo.txt')):
     file = open('botinfo.txt', 'w')
     file.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = 100\nvalue = 0 ")
     file.close()
-#if not(os.path.exists('./tmpFile.txt')):
-    #print("file doesn't exist")
-    #run()
+
+
+# if not(os.path.exists('./tmpFile.txt')):
+# print("file doesn't exist")
+# run()
 
 def updateLastOrder(order):
     global last5, counter
     if counter >= 5:
-        counter=0
+        counter = 0
     last5[counter] = order
-    counter+=1
+    counter += 1
+
 
 botInfoRead = open('botinfo.txt', 'r')
 botInfo = botInfoRead.read().split('\n')
-bought = botInfo[0].split('=')[1].strip(" ")=="True"
+bought = botInfo[0].split('=')[1].strip(" ") == "True"
 if bought:
     stockBought = seperate(botInfo[1])
     buyPrice = float(seperate(botInfo[2]))
     sellPrice = float(seperate(botInfo[3]))
-    sellNegative = buyPrice-(buyPrice*0.1)
+    sellNegative = buyPrice - (buyPrice * 0.1)
     shares = float(seperate(botInfo[4]))
     money = float(seperate(botInfo[5]))
     value = float(seperate(botInfo[6]))
@@ -70,8 +74,11 @@ else:
     inputui.startUI()
     root.mainloop()
     money = inputui.getValue()
+    key, secret = inputui.getSecret()
+    setSecret(key, secret)
     print(money)
 botInfoRead.close()
+
 
 def run_bot():
     global sellList, goodForBuy, last5
@@ -80,12 +87,13 @@ def run_bot():
 
     buyThread = threading.Thread(target=buy, name="buyThread", args=())
     sellThread = threading.Thread(target=sell, name="sellThread", args=())
-    
+
     buyThread.start()
     sellThread.start()
 
     buyThread.join()
     sellThread.join()
+
 
 def analyze():
     global buyPrice, sellPrice
@@ -101,6 +109,7 @@ def analyze():
         pass
     except Exception as e:
         print(e)
+
 
 def buy():
     global goodForBuy, last5, sellList, money
@@ -147,10 +156,9 @@ def buy():
                     print(e)
 
 
-
 def sell():
     global sellList, shares, money
-    #two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
+    # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
         try:
             if len(stock)>=3:
@@ -172,20 +180,21 @@ def sell():
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':
-                    #remove the order from the list, update the money, and update file 
+                    # remove the order from the list, update the money, and update file
                     sellList.pop(sellList.index(stock))
                     money += high * shares
                     botInfoWrite = open("botinfo.txt", 'w')
-                    botInfoWrite.write("bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = "+ str(money) +"\nvalue = 0 "+"\norderId = 0")
+                    botInfoWrite.write(
+                        "bought = False\nstockBought = \nbuyPrice = 0\nsellPrice = 0\nshares = 0\nmoney = " + str(
+                            money) + "\nvalue = 0 " + "\norderId = 0")
                     botInfoWrite.close()
                 elif stop_status == "filled":
                     sellList.pop(sellList.index(stock))
-                    money+= high * shares
+                    money += high * shares
             else:
                 getOrderId(stock[0], stock)
         except Exception as e:
             print("error occured", e)
-
 
 
 tradingHourStart = datetime.now().replace(hour=7, minute=30).strftime("%H:%M")
@@ -197,18 +206,18 @@ analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
 print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
-#doAnalysis()
+# doAnalysis()
 analyze()
 
 while float(accountValue())>0.0:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
     is_sunday = datetime.now().weekday() == 6
-    if current_time >= tradingHourStart and current_time < tradingHourEnd and not(is_saturday or is_sunday):
+    if current_time >= tradingHourStart and current_time < tradingHourEnd and not (is_saturday or is_sunday):
         hasPrinted = False
         run_bot()
     else:
-        if not(hasPrinted):
+        if not (hasPrinted):
             print("non trading hours/day")
             hasPrinted = True
     if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
@@ -225,9 +234,9 @@ while float(accountValue())>0.0:
                 for line in fileR:
                     line = line.split(',')
                     if line[0].strip(" ") == stockBought:
-                        sellPrice = (float(line[1])/2)+buyPrice
+                        sellPrice = (float(line[1]) / 2) + buyPrice
                         print(sellPrice)
-    if current_time >= analyzeTimeStart and current_time < analyzeTimeEnd:
+    if analyzeTimeStart <= current_time < analyzeTimeEnd:
         print("Analyzing stock")
         try:
             analyze()
