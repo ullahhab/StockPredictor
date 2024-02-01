@@ -30,12 +30,12 @@ class inputUI:
 
         def process_money():
             money_amount = money_entry.get()
-            secret = secret_entry.get()
-            api = api_entry.get()
+            self.secret = secret_entry.get()
+            self.key = api_entry.get()
             try:
                 # Attempt to convert the entered text to a float
                 money_amount = float(money_amount)
-                accValue = float(getAccValue(secret, api))
+                accValue = float(getAccValue(self.secret, self.key))
                 # Process the money amount (you can replace this with your own logic)
                 if accValue >= money_amount:
                     result_label.config(text=f"Money Amount: ${money_amount:.2f} processed successfully")
@@ -77,5 +77,6 @@ class inputUI:
         return self.value
 
     def getSecret(self):
+        print("debug", self.key, self.secret)
         return self.key, self.secret
 
