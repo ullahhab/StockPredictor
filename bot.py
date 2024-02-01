@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 #from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
-from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue
+from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder
 from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
@@ -14,7 +14,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice
 from tradingStrat import strat
 from stockPred import doAnalysis
 
@@ -119,8 +119,9 @@ def buy():
                     while num in randomList and goodForBuy[num] in last5:
                         num = random.randint(0, len(goodForBuy)-1)
                     stock = goodForBuy[num]
-                    ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
-                    low = float(ticker.iloc[-1]['Close'])
+                    #ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
+                    #low = float(ticker.iloc[-1]['Close'])
+                    low = orderPrice(stock[0])
                     print(stock[0], low)
                     if round(float(stock[2]), 2) >=low:
                         print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", mon)
@@ -156,13 +157,16 @@ def sell():
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
                 if orderStatus(stock[2]['buy'])=='filled':
+                    orderPrice = getBuyOrder(stock[2][buy])
+                    #Just to give enough time to ping
+                    time.sleep(0.2)
                     stockBought = stock[0]
                     shares = stock[1]
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
                     #ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
                     #high = float(ticker.iloc[-1]['Close'])
                     value = shares*high
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "net value:", accountValue())
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",orderPrice-high, "net value:", accountValue())
                 else:
                     print("unbought", stock[0])
                 limit_status = orderStatus(limit_orderId)

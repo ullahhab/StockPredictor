@@ -53,16 +53,17 @@ def ChangeOrderStatus(id):
 
 def getOrderId(stock, lst):
     orderIds = {}
-    while len(orderIds)<2:
+    while len(orderIds)<3:
         print("looking for orders: Found =", len(orderIds))
         for order in api.list_orders(status='all'):
+            time.sleep(0.2)
             if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
                 if order.side == "sell" and order.symbol == stock and order.type == "limit":
                     orderIds["limitSell"] = order.id
                 elif order.side == "sell" and order.symbol == stock and (order.type == "stop_limit" or order.type == "stop"):
                     orderIds["Stop_limit"] = order.id
-                elif order.side == "buy" and order.symbol == stock and order.type == 'limit':
-                    orderIds["buy"] = order.id
+            if order.side == "buy" and order.symbol == stock and order.type == 'limit':
+                orderIds["buy"] = order.id
     print("found ", len(orderIds), "debug", orderIds)
     lst.append(orderIds)
 for order in api.list_orders(status='all'):
@@ -88,3 +89,9 @@ def orderDetails(symbl, orderId):
 
 def accountValue():
     return api.get_account().equity
+
+def orderPrice(symbl):
+    return float(api.get_latest_trade(symbl).price)
+
+def getBuyOrder(orderId):
+    return float(api.get_order(orderId).limit_price)

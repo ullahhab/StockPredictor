@@ -46,11 +46,14 @@ for stock in new:
             continuation.append([pOrder.symbol, pOrder.qty])
             flag = False
         if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
-            print(orderDetails(order).symbol, orderDetails(order).qty, orderDetails(order).type, orderDetails(order).side, orderDetails(order).submitted_at, orderDetails(order).id)
+            #print(orderDetails(order).symbol, orderDetails(order).qty, orderDetails(order).type, orderDetails(order).side, orderDetails(order).submitted_at, orderDetails(order).id)
+            print("order details", orderDetails(order))
             if pOrder.type == 'limit' and pOrder.side == 'sell':
                 adder['limit_sell'] = pOrder.id
             elif pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
                 adder['stop_limit'] = pOrder.id
+        elif pOrder.side == "buy" and pOrder.symbol == stock:
+            adder['buy'] = pOrder.id
         continuation[-1].append(adder) 
                 
 

@@ -3,6 +3,6 @@ stockBought =
 buyPrice = 0
 sellPrice = 0
 shares = 0
-money = 99.9
+money = 1003.0799999999999
 value = 0 
 orderId = 0
