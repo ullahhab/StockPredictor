@@ -171,8 +171,6 @@ def sell():
                     stockBought = stock[0]
                     shares = stock[1]
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
-                    #ticker = yf.download(stockBought, period='5d', interval='1m', progress=False)
-                    #high = float(ticker.iloc[-1]['Close'])
                     value = shares*high
                     print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",orderPrice-high, "net value:", accountValue())
                 else:
