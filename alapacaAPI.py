@@ -62,7 +62,7 @@ def getOrderId(stock, lst):
                         order.type == "stop_limit" or order.type == "stop"):
                     orderIds["Stop_limit"] = order.id
             if order.side == "buy" and order.symbol == stock and order.type == 'limit':
-                orderIds["Bought"] = order.id
+                orderIds["buy"] = order.id
     print("found ", len(orderIds), "debug", orderIds)
     lst.append(orderIds)
 

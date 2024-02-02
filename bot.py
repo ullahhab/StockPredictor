@@ -165,8 +165,8 @@ def sell():
             if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
-                if orderStatus(stock[2]["Bought"])=='filled':
-                    orderPrice = getBuyOrder(stock[2]['Bought'])
+                if orderStatus(stock[2]["buy"])=='filled':
+                    orderPrice = getBuyOrder(stock[2]['buy'])
                     #Just to give enough time to ping
                     stockBought = stock[0]
                     shares = stock[1]
