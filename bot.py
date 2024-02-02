@@ -160,14 +160,14 @@ def sell():
     global sellList, shares, money
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
+        time.sleep(0.2)
         try:
             if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
-                if orderStatus(stock[2]['buy'])=='filled':
-                    orderPrice = getBuyOrder(stock[2][buy])
+                if orderStatus(stock[2]["Bought"])=='filled':
+                    orderPrice = getBuyOrder(stock[2]['Bought'])
                     #Just to give enough time to ping
-                    time.sleep(0.2)
                     stockBought = stock[0]
                     shares = stock[1]
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
