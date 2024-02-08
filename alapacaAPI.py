@@ -10,7 +10,8 @@ api = ""
 
 
 def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_price):
-    order = api.submit_order(symbol=symbol,
+    try:
+        order = api.submit_order(symbol=symbol,
                              qty=qty,
                              side='buy',
                              type='limit',
@@ -25,69 +26,92 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                                  limit_price=round((take_profit_price - (take_profit_price * 0.01)), 2),
                              )
                              )
-    tries = 1
-    #########################this will need some modification############################
-    while True:
-        time.sleep(10)
-        updated_order = api.get_order(order.id)
-        temp = order.id
-        if updated_order.status != 'rejected' and updated_order.status != "canceled":  # or updated_order.status == 'accepted':
-            print("Order has been sent")
-            print("Order status", updated_order.status)
-            return 200, updated_order.id
-        elif updated_order.status == 'rejected' or updated_order.status == 'canceled':
-            print("Order has been ", updated_order.status)
-            return 500, order.id
-        if tries >= 5:
-            print("issues putting the order", order.status)
-            return 500, order.id
-        if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
-            tries += 1
+        tries = 1
+        #########################this will need some modification############################
+        while True:
+            time.sleep(10)
+            updated_order = api.get_order(order.id)
+            temp = order.id
+            if updated_order.status != 'rejected' and updated_order.status != "canceled":  # or updated_order.status == 'accepted':
+                print("Order has been sent")
+                print("Order status", updated_order.status)
+                return 200, updated_order.id
+            elif updated_order.status == 'rejected' or updated_order.status == 'canceled':
+                print("Order has been ", updated_order.status)
+                return 500, order.id
+            if tries >= 5:
+                print("issues putting the order", order.status)
+                return 500, order.id
+            if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
+                tries += 1
+    except Exception as e: 
+        pass 
 
 
 def ChangeOrderStatus(id):
-    updated_order = api.get_order(id)
-    return updated_order.status
+    try:
+        updated_order = api.get_order(id)
+        return updated_order.status
+    except:
+        return "unknown"
 
 
 def getOrderId(stock, lst):
     orderIds = {}
-    while len(orderIds)<3:
-        print("looking for orders: Found =", len(orderIds))
-        for order in api.list_orders(status='all'):
-            if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
-                if order.side == "sell" and order.symbol == stock and order.type == "limit":
-                    orderIds["limitSell"] = order.id
-                elif order.side == "sell" and order.symbol == stock and (
-                        order.type == "stop_limit" or order.type == "stop"):
-                    orderIds["Stop_limit"] = order.id
-            if order.side == "buy" and order.symbol == stock and order.type == 'limit':
-                orderIds["buy"] = order.id
-    print("found ", len(orderIds), "debug", orderIds)
-    lst.append(orderIds)
+    try:
+        while len(orderIds)<3:
+            print("looking for orders: Found =", len(orderIds))
+            for order in api.list_orders(status='all'):
+                if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
+                    if order.side == "sell" and order.symbol == stock and order.type == "limit":
+                        orderIds["limitSell"] = order.id
+                    elif order.side == "sell" and order.symbol == stock and (order.type == "stop_limit" or order.type == "stop"):
+                        orderIds["Stop_limit"] = order.id
+                if order.side == "buy" and order.symbol == stock and order.type == 'limit':
+                    orderIds["buy"] = order.id
+        print("found ", len(orderIds), "debug", orderIds)
+        lst.append(orderIds)
+    except Exception as e:
+        pass
 
 
 def getNeg(order):
-    if (order.status != "replaced") and (order.status != "pending_replaced") and (
-            order.status != "pending_cancel") and (order.status != "canceled") and (order.status != "expired"):
-        return True
-    return False
+    try:
+        if (order.status != "replaced") and (order.status != "pending_replaced") and (order.status != "pending_cancel") and (order.status != "canceled") and (order.status != "expired"):
+            return True
+        return False
+    except:
+        return False
+    
+
 
 
 def orderDetails(symbl, orderId):
-    order = api.get_latest_trade(symbl)
-    limitPrice = api.get_order(orderId).limit_price
-    return order.price, limitPrice
+    try:
+        order = api.get_latest_trade(symbl)
+        limitPrice = api.get_order(orderId).limit_price
+        return order.price, limitPrice
+    except:
+        return 0, 0
 
 
 def accountValue():
-    return api.get_account().equity
+    try:
+        return api.get_account().equity
+    except:
+        return 0
 
 def orderPrice(symbl):
-    return float(api.get_latest_trade(symbl).price)
+    try:
+        return float(api.get_latest_trade(symbl).price)
+    except:
+        return 0
 
 def getBuyOrder(orderId):
-    return float(api.get_order(orderId).limit_price)
+    try:
+        return float(api.get_order(orderId).limit_price)
+    except:
+        return 0
 
 
 def setSecret(key, secret):

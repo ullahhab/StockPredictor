@@ -172,7 +172,7 @@ def sell():
                     shares = stock[1]
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
                     value = shares*high
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",orderPrice-high, "net value:", accountValue())
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",high-orderPrice, "net value:", accountValue())
                 else:
                     print("unbought", stock[0])
                 limit_status = orderStatus(limit_orderId)
