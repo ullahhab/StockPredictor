@@ -115,7 +115,6 @@ def buy():
     global goodForBuy, last5, sellList, money
     mon = 0
     buyingPower = strat(money)
-    print(buyingPower)
     if int(buyingPower)>0:
         mon = money/buyingPower
     else:
