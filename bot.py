@@ -151,6 +151,7 @@ def buy():
                             money = money - mon
                             print("money left", money)
                             break
+                    time.sleep(1)
                 except Exception as e:
                     print(e)
 
