@@ -81,8 +81,14 @@ botInfoRead.close()
 
 
 def run_bot():
-    global sellList, goodForBuy, last5
-
+    global sellList, goodForBuy, last5, money
+    if money>0:
+        try:
+            doAnalysis()
+            analyze()
+        except Exception as e:
+            print(e)
+    print("Money inside the run bot", money)
     lock = threading.Lock()
 
     buyThread = threading.Thread(target=buy, name="buyThread", args=())
@@ -112,11 +118,6 @@ def analyze():
 
 
 def buy():
-    try:
-        doAnalysis()
-        analyze()
-    except Exception as e:
-            print(e)
     global goodForBuy, last5, sellList, money
     mon = 0
     buyingPower = strat(money)
@@ -126,40 +127,39 @@ def buy():
         buyingPower = 0
     for bp in range(buyingPower):
         randomList = []
-        if int(bp)>0:
-            for stock in goodForBuy:
-                    try:
+        for stock in goodForBuy:
+                try:
+                    num = random.randint(0, len(goodForBuy)-1)
+                    while num in randomList and goodForBuy[num] in last5:
                         num = random.randint(0, len(goodForBuy)-1)
-                        while num in randomList and goodForBuy[num] in last5:
-                            num = random.randint(0, len(goodForBuy)-1)
-                        stock = goodForBuy[num]
-                        #ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
-                        #low = float(ticker.iloc[-1]['Close'])
-                        low = orderPrice(stock[0])
-                        print(stock[0], low)
-                        if round(float(stock[2]), 2) >=low:
-                            print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", mon)
-                            buyPrice = low
-                            sellPrice = round((low+(float(stock[1])/2)),2)
-                            stockBought = stock[0]
-                            shares = mon // low
-                            sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                            print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
-                            status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
-                            if status == 200:
-                                #botInfoWrite = open("botinfo.txt", 'w')
-                                print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
-                                #botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(mon)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
-                                #botInfoWrite.close()
-                                bought = True
-                                sellList.append([stockBought, shares])
-                                updateLastOrder(stockBought)
-                                money = money - mon
-                                print("money left", money)
-                                break
-                        time.sleep(1)
-                    except Exception as e:
-                        print(e)
+                    stock = goodForBuy[num]
+                    #ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
+                    #low = float(ticker.iloc[-1]['Close'])
+                    low = orderPrice(stock[0])
+                    print(stock[0], low)
+                    if round(float(stock[2]), 2) >=low:
+                        print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", mon)
+                        buyPrice = low
+                        sellPrice = round((low+(float(stock[1])/2)),2)
+                        stockBought = stock[0]
+                        shares = mon // low
+                        sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
+                        print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
+                        status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                        if status == 200:
+                            #botInfoWrite = open("botinfo.txt", 'w')
+                            print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
+                            #botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(mon)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
+                            #botInfoWrite.close()
+                            bought = True
+                            sellList.append([stockBought, shares])
+                            updateLastOrder(stockBought)
+                            money = money - mon
+                            print("money left", money)
+                            break
+                    time.sleep(1)
+                except Exception as e:
+                    print(e)
 
 
 def sell():
@@ -210,6 +210,8 @@ analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
 print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
+# doAnalysis()
+analyze()
 
 while float(accountValue())>0.0:
     current_time = datetime.now().strftime("%H:%M")
@@ -222,4 +224,26 @@ while float(accountValue())>0.0:
         if not (hasPrinted):
             print("non trading hours/day")
             hasPrinted = True
+    if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
+        print("doing analysis")
+        try:
+            doAnalysis()
+        except Exception as e:
+            print(e)
+        finally:
+            if bought:
+                file = open('stocks.csv', 'r')
+                header = file.readline()
+                fileR = file.read().split('\n')
+                for line in fileR:
+                    line = line.split(',')
+                    if line[0].strip(" ") == stockBought:
+                        sellPrice = (float(line[1]) / 2) + buyPrice
+                        print(sellPrice)
+    if analyzeTimeStart <= current_time < analyzeTimeEnd:
+        print("Analyzing stock")
+        try:
+            analyze()
+        except Exception as e:
+            print(e)
     time.sleep(60)

@@ -45,7 +45,7 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
             if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
                 tries += 1
     except Exception as e: 
-        pass 
+        print("order", e)
 
 
 def ChangeOrderStatus(id):
