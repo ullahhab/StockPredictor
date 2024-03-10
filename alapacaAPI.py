@@ -31,13 +31,15 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
         while True:
             time.sleep(10)
             updated_order = api.get_order(order.id)
+            print("order status", updated_order.status)
             temp = order.id
-            if updated_order.status != 'rejected' and updated_order.status != "canceled":  # or updated_order.status == 'accepted':
+            if updated_order.status != 'rejected' and updated_order.status != "canceled" and updated_order.status != 'denied':  # or updated_order.status == 'accepted':
                 print("Order has been sent")
                 print("Order status", updated_order.status)
                 return 200, updated_order.id
-            elif updated_order.status == 'rejected' or updated_order.status == 'canceled':
-                print("Order has been ", updated_order.status)
+            elif updated_order.status == 'rejected' or updated_order.status == 'canceled' or updated_order.status == 'denied':
+                print("updated order", updated_order)
+                #print("Order has been ", updated_order.status, updated_order)
                 return 500, order.id
             if tries >= 5:
                 print("issues putting the order", order.status)
@@ -45,7 +47,9 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
             if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
                 tries += 1
     except Exception as e: 
-        print("order", e)
+        print("Something bad happened\n reason:", e)
+        return 500, "timeout"
+        
 
 
 def ChangeOrderStatus(id):

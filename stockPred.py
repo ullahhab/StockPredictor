@@ -47,7 +47,7 @@ def getTicker():
             try:
                 if '^' in stock:
                     stock = stock[:stock.index("^")]
-                data = yf.download(stock, period='7d', progress=False)
+                data = yf.download(stock, period='5d', progress=False)
                 if len(data) == 0:
                     print(data)
                 counter+=1

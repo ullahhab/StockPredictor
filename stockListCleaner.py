@@ -18,4 +18,4 @@ def run():
                 newFile.write(line+"\n")
         except:
             continue
-#run()
+run()

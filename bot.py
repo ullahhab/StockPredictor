@@ -23,7 +23,8 @@ goodForBuy = []
 counter = 0
 sellList = []
 buyList = []
-
+timeoutForBuy = time.time()
+buySuspended = False
 
 def seperate(value):
     return value.split("=")[1].strip(" ")
@@ -81,11 +82,12 @@ botInfoRead.close()
 
 
 def run_bot():
-    global sellList, goodForBuy, last5, money
-    if money>0:
+    global sellList, goodForBuy, last5, money, buySuspended
+    if money>0 and (not buySuspended):
         try:
             doAnalysis()
             analyze()
+            print("skiping analysis")
         except Exception as e:
             print(e)
     print("Money inside the run bot", money)
@@ -118,16 +120,28 @@ def analyze():
 
 
 def buy():
-    global goodForBuy, last5, sellList, money
+    retry = 0
+    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended
     mon = 0
     buyingPower = strat(money)
+    print("before", time.time())
+    if timeoutForBuy > time.time():
+        print("buy suspended for ", (timeoutForBuy-time.time())/3600, "hours")
+        buySuspended = True
+        return
+    buySuspended = False
     if int(buyingPower)>0:
         mon = money/buyingPower
     else:
         buyingPower = 0
     for bp in range(buyingPower):
+        if retry > 3:
+            break
         randomList = []
         for stock in goodForBuy:
+                if retry >3:
+                    buySuspended = True
+                    break
                 try:
                     num = random.randint(0, len(goodForBuy)-1)
                     while num in randomList and goodForBuy[num] in last5:
@@ -156,13 +170,18 @@ def buy():
                             updateLastOrder(stockBought)
                             money = money - mon
                             print("money left", money)
+                            retry = 0
                             break
+                        elif(status == 500 and orderId=="timeout"):
+                            timeoutForBuy = 24*3600 + time.time()
+                            retry +=1
                     time.sleep(1)
                 except Exception as e:
                     print(e)
 
 
 def sell():
+    print("sell")
     global sellList, shares, money
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
@@ -202,7 +221,7 @@ def sell():
 
 
 tradingHourStart = datetime.now().replace(hour=7, minute=30).strftime("%H:%M")
-tradingHourEnd = datetime.now().replace(hour=19, minute=50).strftime("%H:%M")
+tradingHourEnd = datetime.now().replace(hour=23, minute=50).strftime("%H:%M")
 analysisTimeStart = datetime.now().replace(hour=6, minute=10).strftime("%H:%M")
 analysisTimeEnd = datetime.now().replace(hour=6, minute=30).strftime("%H:%M")
 analyzeTimeStart = datetime.now().replace(hour=7, minute=15).strftime("%H:%M")
