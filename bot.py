@@ -126,7 +126,7 @@ def buy():
     buyingPower = strat(money)
     print("before", time.time())
     if timeoutForBuy > time.time():
-        print("buy suspended for ", (timeoutForBuy-time.time())/3600, "hours")
+        print("buy suspended for ", (timeoutForBuy-time.time())/3600, "hours", "will resume at", datetime.fromtimestamp(timeoutForBuy))
         buySuspended = True
         return
     buySuspended = False
@@ -181,7 +181,6 @@ def buy():
 
 
 def sell():
-    print("sell")
     global sellList, shares, money
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
