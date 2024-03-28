@@ -1,8 +1,0 @@
-bought = False
-stockBought = 
-buyPrice = 0
-sellPrice = 0
-shares = 0
-money = 2035.8056
-value = 0 
-orderId = 0
