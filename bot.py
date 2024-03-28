@@ -18,6 +18,7 @@ from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetail
 from tradingStrat import strat
 from stockPred import doAnalysis
 
+
 last5 = [0, 0, 0, 0, 0]
 goodForBuy = []
 counter = 0
