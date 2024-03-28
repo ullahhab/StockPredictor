@@ -229,7 +229,7 @@ analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
 print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
-# doAnalysis()
+doAnalysis()
 analyze()
 
 while float(accountValue())>0.0:
