@@ -17,6 +17,7 @@ import yfinance as yf
 from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret
 from tradingStrat import strat
 from stockPred import doAnalysis
+from stockListCleaner import cleaner
 
 
 last5 = [0, 0, 0, 0, 0]
@@ -229,9 +230,13 @@ analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
 hasPrinted = False
 print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
-doAnalysis()
+if not os.path.isfile('tmpFile.txt'):
+    #cleaner()
+    #doAnalysis()
+    print("temp here")
+else: 
+    print("file exists")
 analyze()
-
 while float(accountValue())>0.0:
     current_time = datetime.now().strftime("%H:%M")
     is_saturday = datetime.now().weekday() == 5
