@@ -232,10 +232,9 @@ print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
 if not os.path.isfile('tmpFile.txt'):
     cleaner()
+if not os.path.isfile('stocks.csv'):
     doAnalysis()
-    print("temp here")
-else: 
-    print("file exists")
+
 analyze()
 while float(accountValue())>0.0:
     current_time = datetime.now().strftime("%H:%M")
