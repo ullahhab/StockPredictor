@@ -231,8 +231,8 @@ hasPrinted = False
 print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
 if not os.path.isfile('tmpFile.txt'):
-    #cleaner()
-    #doAnalysis()
+    cleaner()
+    doAnalysis()
     print("temp here")
 else: 
     print("file exists")
