@@ -38,10 +38,6 @@ if not (os.path.exists('./botinfo.txt')):
     file.close()
 
 
-# if not(os.path.exists('./tmpFile.txt')):
-# print("file doesn't exist")
-# run()
-
 def updateLastOrder(order):
     global last5, counter
     if counter >= 5:
@@ -87,9 +83,9 @@ def run_bot():
     global sellList, goodForBuy, last5, money, buySuspended
     if money>0 and (not buySuspended):
         try:
+            cleaner()
             doAnalysis()
             analyze()
-            print("skiping analysis")
         except Exception as e:
             print(e)
     print("Money inside the run bot", money)
@@ -126,17 +122,13 @@ def buy():
     global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended
     mon = 0
     buyingPower = strat(money)
-    print("before", time.time())
     if timeoutForBuy > time.time():
-        print("buy suspended for ", (timeoutForBuy-time.time())/3600, "hours", "will resume at", datetime.fromtimestamp(timeoutForBuy))
+        print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)*60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
         buySuspended = True
         return
     buySuspended = False
-    if int(buyingPower)>0:
-        mon = money/buyingPower
-    else:
-        buyingPower = 0
-    for bp in range(buyingPower):
+    for mon in buyingPower:
+        print(mon, money)
         if retry > 3:
             break
         randomList = []
@@ -149,8 +141,6 @@ def buy():
                     while num in randomList and goodForBuy[num] in last5:
                         num = random.randint(0, len(goodForBuy)-1)
                     stock = goodForBuy[num]
-                    #ticker = yf.download(stock[0], period='1d', interval='1m', progress=False)
-                    #low = float(ticker.iloc[-1]['Close'])
                     low = orderPrice(stock[0])
                     print(stock[0], low)
                     if round(float(stock[2]), 2) >=low:
@@ -163,14 +153,11 @@ def buy():
                         print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
                         status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
-                            #botInfoWrite = open("botinfo.txt", 'w')
                             print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
-                            #botInfoWrite.write("bought = True\nstockBought = "+str(stockBought)+"\nbuyPrice = " +str(low)+"\nsellPrice = "+str(sellPrice)+"\nshares = "+str(shares)+"\nmoney = "+str(mon)+"\nvalue ="+str(value)+"\norderId ="+str(orderId)+'\n')
-                            #botInfoWrite.close()
                             bought = True
                             sellList.append([stockBought, shares])
                             updateLastOrder(stockBought)
-                            money = money - mon
+                            money -= mon
                             print("money left", money)
                             retry = 0
                             break
@@ -237,36 +224,5 @@ if not os.path.isfile('stocks.csv'):
 
 analyze()
 while float(accountValue())>0.0:
-    current_time = datetime.now().strftime("%H:%M")
-    is_saturday = datetime.now().weekday() == 5
-    is_sunday = datetime.now().weekday() == 6
-    if current_time >= tradingHourStart and current_time < tradingHourEnd and not (is_saturday or is_sunday):
-        hasPrinted = False
-        run_bot()
-    else:
-        if not (hasPrinted):
-            print("non trading hours/day")
-            hasPrinted = True
-    if current_time >= analysisTimeStart and current_time < analysisTimeEnd:
-        print("doing analysis")
-        try:
-            doAnalysis()
-        except Exception as e:
-            print(e)
-        finally:
-            if bought:
-                file = open('stocks.csv', 'r')
-                header = file.readline()
-                fileR = file.read().split('\n')
-                for line in fileR:
-                    line = line.split(',')
-                    if line[0].strip(" ") == stockBought:
-                        sellPrice = (float(line[1]) / 2) + buyPrice
-                        print(sellPrice)
-    if analyzeTimeStart <= current_time < analyzeTimeEnd:
-        print("Analyzing stock")
-        try:
-            analyze()
-        except Exception as e:
-            print(e)
+    run_bot()
     time.sleep(60)
