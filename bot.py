@@ -88,7 +88,6 @@ def run_bot():
             analyze()
         except Exception as e:
             print(e)
-    print("Money inside the run bot", money)
     lock = threading.Lock()
 
     buyThread = threading.Thread(target=buy, name="buyThread", args=())
@@ -121,19 +120,20 @@ def buy():
     retry = 0
     global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended
     mon = 0
+    if money<=0:
+        return
     buyingPower = strat(money)
     if timeoutForBuy > time.time():
-        print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)*60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
+        print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
         buySuspended = True
         return
     buySuspended = False
     for mon in buyingPower:
-        print(mon, money)
-        if retry > 3:
+        if retry > 10:
             break
         randomList = []
         for stock in goodForBuy:
-                if retry >3:
+                if retry >10:
                     buySuspended = True
                     break
                 try:
@@ -208,21 +208,7 @@ def sell():
             print("error occured", e)
 
 
-tradingHourStart = datetime.now().replace(hour=7, minute=30).strftime("%H:%M")
-tradingHourEnd = datetime.now().replace(hour=23, minute=50).strftime("%H:%M")
-analysisTimeStart = datetime.now().replace(hour=6, minute=10).strftime("%H:%M")
-analysisTimeEnd = datetime.now().replace(hour=6, minute=30).strftime("%H:%M")
-analyzeTimeStart = datetime.now().replace(hour=7, minute=15).strftime("%H:%M")
-analyzeTimeEnd = datetime.now().replace(hour=7, minute=17).strftime("%H:%M")
-hasPrinted = False
-print("stop loss price", sellNegative, "Sell positive", sellPrice)
 
-if not os.path.isfile('tmpFile.txt'):
-    cleaner()
-if not os.path.isfile('stocks.csv'):
-    doAnalysis()
-
-analyze()
 while float(accountValue())>0.0:
     run_bot()
     time.sleep(60)

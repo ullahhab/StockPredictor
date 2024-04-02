@@ -10,12 +10,8 @@ def strat(money):
         if money//100:
             money -= 100
             ret.append(100)
-        if money<100:
+        if money<100 and money>0:
             ret.append(money)
             money-=money
     test=0
-    print(ret)
-    for i in ret:
-        test+=i
-    print(test)
     return ret
