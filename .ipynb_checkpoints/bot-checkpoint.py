@@ -75,9 +75,8 @@ else:
     root.mainloop()
     money = inputui.getValue()
     key, secret = inputui.getSecret()
-    if inputui.Cont.get():
-        sellList = inputui.cont(key, secret)
     setSecret(key, secret)
+    print(money)
 botInfoRead.close()
 
 

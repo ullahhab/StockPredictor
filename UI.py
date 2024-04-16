@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 import os
 from tkinter import messagebox
+from tkinter import IntVar
 
 
 class inputUI:
@@ -18,6 +19,7 @@ class inputUI:
         self.dotEnvFileExist = False
         self.populateMoreFields = False
         self.accVal = -1
+        self.Cont = False
 
     # Create the main window
     def startUI(self):
@@ -136,6 +138,10 @@ class inputUI:
 
             result_label = ttk.Label(self.root, text="")
             result_label.grid(row=4, column=0, columnspan=2, pady=10)
+
+            self.Cont = IntVar()
+            cont = ttk.Checkbutton(self.root, text="Continue?", variable=self.Cont, onvalue=1, offvalue=0)
+            cont.grid(row=4,column=1, columnspan=2, pady=10)
             
         else:
             self.dotEnvFileExist = False
@@ -163,11 +169,64 @@ class inputUI:
             result_label = ttk.Label(self.root, text="")
             result_label.grid(row=4, column=0, columnspan=2, pady=10)
 
+            self.Cont = IntVar()
+            cont = ttk.Checkbutton(self.root, text="Continue?", variable=self.Cont, onvalue=1, offvalue=0)
+            cont.grid(row=4,column=1, columnspan=2, pady=10)
+
     def getValue(self):
         return self.value
 
     def getSecret(self):
         return self.key, self.secret
+    
+    def cont(self, key, secret):
+        APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
+        def getNeg(order):
+            if (order.status!= "replaced") and (order.status!= "pending_replaced") and (order.status!= "pending_cancel") and (order.status!= "canceled") and (order.status!= "expired"):
+                return True
+            return False
+
+        def ChangeOrderStatus(id):
+            updated_order = api.get_order(id)
+            return updated_order
+
+        api = tradeapi.REST(key_id=key, secret_key=secret, 
+                            base_url=APCA_API_BASE_URL, api_version='v2')
+
+
+        new = {}
+
+        def orderDetails(orderId):
+            limitPrice = api.get_order(orderId)
+            return limitPrice
+
+        for stock in api.list_orders(status='all'):
+            if getNeg(stock) and stock.status!='filled':
+                if stock.symbol not in new:
+                    new[stock.symbol] = [stock.id]
+                else:
+                    new[stock.symbol].append(stock.id)
+
+        continuation = []
+        for stock in new:
+            adder = {}
+            flag = True
+            for order in new[stock]:
+                time.sleep(1)
+                pOrder = orderDetails(order)
+                if flag:
+                    continuation.append([pOrder.symbol, pOrder.qty])
+                    flag = False
+                if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
+                    if pOrder.type == 'limit' and pOrder.side == 'sell':
+                        adder['limit_sell'] = pOrder.id
+                    if pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
+                        adder['stop_limit'] = pOrder.id
+                if pOrder.side == "buy" and pOrder.symbol == stock and pOrder.type == 'limit':
+                    adder['buy'] = pOrder.id
+            continuation[-1].append(adder)
+        return continuation
+
 
 
 
