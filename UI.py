@@ -206,7 +206,6 @@ class inputUI:
                     new[stock.symbol] = [stock.id]
                 else:
                     new[stock.symbol].append(stock.id)
-
         continuation = []
         for stock in new:
             adder = {}
@@ -219,9 +218,9 @@ class inputUI:
                     flag = False
                 if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
                     if pOrder.type == 'limit' and pOrder.side == 'sell':
-                        adder['limit_sell'] = pOrder.id
+                        adder['limitSell'] = pOrder.id
                     if pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
-                        adder['stop_limit'] = pOrder.id
+                        adder['Stop_limit'] = pOrder.id
                 if pOrder.side == "buy" and pOrder.symbol == stock and pOrder.type == 'limit':
                     adder['buy'] = pOrder.id
             continuation[-1].append(adder)

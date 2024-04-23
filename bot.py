@@ -161,7 +161,6 @@ def buy():
                             sellList.append([stockBought, shares])
                             updateLastOrder(stockBought)
                             money -= mon
-                            print("money left", money)
                             retry = 0
                             break
                         elif(status == 500 and orderId=="timeout"):
