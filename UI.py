@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 import os
 from tkinter import messagebox
+from tkinter import IntVar
 
 
 class inputUI:
@@ -18,14 +19,16 @@ class inputUI:
         self.dotEnvFileExist = False
         self.populateMoreFields = False
         self.accVal = -1
+        self.Cont = False
+        self.url = ""
 
     # Create the main window
     def startUI(self):
         self.root.title("Bot money start")
 
-        def getAccValue(secret, api):
+        def getAccValue(secret, api, url):
             try:
-                APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
+                APCA_API_BASE_URL = url
                 APCA_API_KEY_ID = api #"PK7L6LK63UD41XRYVRQV"
                 APCA_API_SECRET_KEY = secret #"FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
                 api = tradeapi.REST(APCA_API_KEY_ID, APCA_API_SECRET_KEY, base_url=APCA_API_BASE_URL)
@@ -46,10 +49,11 @@ class inputUI:
                 saveFile = messagebox.askyesno(title="Save Secrets", message="Would you like to save?")
                 if saveFile:
                     file = open(".env", 'w')
-                    file.write("APCA_API_KEY_ID="+str(api_entry.get())+"\nAPCA_API_SECRET_KEY="+str(secret_entry.get()))
+                    file.write("APCA_API_KEY_ID="+str(api_entry.get())+"\nAPCA_API_SECRET_KEY="+str(secret_entry.get()+"\nAPCA_API_BASE_URL="+str(url_entry.get())))
                     file.close()
                 self.secret = secret_entry.get()
                 self.key = api_entry.get()
+                self.url = url_entry.get()
             else:
                 file = open(".env", 'r')
                 file = file.read().split("\n")
@@ -57,13 +61,15 @@ class inputUI:
                     value = value.split("=")
                     if value[0] == "APCA_API_KEY_ID":
                         self.key = value[1]
+                    elif value[0] == "APCA_API_BASE_URL":
+                        self.url = value[1]
                     else:
                         self.secret = value[1]
             money_amount = money_entry.get()
             try:
                 # Attempt to convert the entered text to a float
                 money_amount = float(money_amount)
-                accValue = float(getAccValue(self.secret, self.key))
+                accValue = float(getAccValue(self.secret, self.key, self.url))
                 # Process the money amount (you can replace this with your own logic)
                 if accValue >= money_amount:
                     result_label.config(text=f"Money Amount: ${money_amount:.2f} processed successfully")
@@ -79,7 +85,7 @@ class inputUI:
             self.root.withdraw()
             def processSecrets():
                 try:
-                    APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
+                    APCA_API_BASE_URL = url_entry.get()
                     APCA_API_KEY_ID = api_entry.get() #"PK7L6LK63UD41XRYVRQV"
                     APCA_API_SECRET_KEY = secret_entry.get() #"FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
                     api = tradeapi.REST(APCA_API_KEY_ID, APCA_API_SECRET_KEY, base_url=APCA_API_BASE_URL)
@@ -115,8 +121,14 @@ class inputUI:
             secret_entry = ttk.Entry(secretsWindow)
             secret_entry.grid(row=2, column=1, padx=10, pady=10)
 
+            url_entry = ttk.Entry(self.root)
+            url_entry.grid(row=3, column=1, padx=10, pady=10)
+
+            url_label = ttk.Label(self.root, text="Enter the URL: ")
+            url_label.grid(row=3, column=0, padx=10, pady=10)
+
             submit_button = ttk.Button(secretsWindow, text="submit", command=processSecrets)
-            submit_button.grid(row=3, column=0, columnspan=2, pady=10)
+            submit_button.grid(row=4, column=0, columnspan=2, pady=10)
 
             secretsWindow.wait_window()
             return self.accVal
@@ -132,10 +144,14 @@ class inputUI:
             money_entry.grid(row=0, column=1, padx=10, pady=10)
 
             process_button = ttk.Button(self.root, text="Start Bot", command=process_money)
-            process_button.grid(row=3, column=0, columnspan=2, pady=10)
+            process_button.grid(row=1, column=0, columnspan=2, pady=10)
 
             result_label = ttk.Label(self.root, text="")
-            result_label.grid(row=4, column=0, columnspan=2, pady=10)
+            result_label.grid(row=2, column=0, columnspan=2, pady=10)
+
+            self.Cont = IntVar()
+            cont = ttk.Checkbutton(self.root, text="Continue?", variable=self.Cont, onvalue=1, offvalue=0)
+            cont.grid(row=4,column=1, columnspan=2, pady=10)
             
         else:
             self.dotEnvFileExist = False
@@ -157,17 +173,75 @@ class inputUI:
             secret_entry = ttk.Entry(self.root)
             secret_entry.grid(row=2, column=1, padx=10, pady=10)
 
+            url_entry = ttk.Entry(self.root)
+            url_entry.grid(row=3, column=1, padx=10, pady=10)
+
+            url_label = ttk.Label(self.root, text="Enter the URL: ")
+            url_label.grid(row=3, column=0, padx=10, pady=10)
+
             process_button = ttk.Button(self.root, text="Start Bot", command=process_money)
-            process_button.grid(row=3, column=0, columnspan=2, pady=10)
+            process_button.grid(row=4, column=0, columnspan=2, pady=10)
 
             result_label = ttk.Label(self.root, text="")
-            result_label.grid(row=4, column=0, columnspan=2, pady=10)
+            result_label.grid(row=5, column=0, columnspan=2, pady=10)
+
+            self.Cont = IntVar()
+            cont = ttk.Checkbutton(self.root, text="Continue?", variable=self.Cont, onvalue=1, offvalue=0)
+            cont.grid(row=5,column=1, columnspan=2, pady=10)
 
     def getValue(self):
         return self.value
 
     def getSecret(self):
-        return self.key, self.secret
+        return self.key, self.secret, self.url
+    
+    def cont(self, key, secret):
+        APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
+        def getNeg(order):
+            if (order.status!= "replaced") and (order.status!= "pending_replaced") and (order.status!= "pending_cancel") and (order.status!= "canceled") and (order.status!= "expired"):
+                return True
+            return False
+
+        def ChangeOrderStatus(id):
+            updated_order = api.get_order(id)
+            return updated_order
+
+        api = tradeapi.REST(key_id=key, secret_key=secret, 
+                            base_url=APCA_API_BASE_URL, api_version='v2')
+
+
+        new = {}
+
+        def orderDetails(orderId):
+            limitPrice = api.get_order(orderId)
+            return limitPrice
+
+        for stock in api.list_orders(status='all'):
+            if getNeg(stock) and stock.status!='filled':
+                if stock.symbol not in new:
+                    new[stock.symbol] = [stock.id]
+                else:
+                    new[stock.symbol].append(stock.id)
+        continuation = []
+        for stock in new:
+            adder = {}
+            flag = True
+            for order in new[stock]:
+                time.sleep(1)
+                pOrder = orderDetails(order)
+                if flag:
+                    continuation.append([pOrder.symbol, pOrder.qty])
+                    flag = False
+                if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
+                    if pOrder.type == 'limit' and pOrder.side == 'sell':
+                        adder['limitSell'] = pOrder.id
+                    if pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
+                        adder['Stop_limit'] = pOrder.id
+                if pOrder.side == "buy" and pOrder.symbol == stock and pOrder.type == 'limit':
+                    adder['buy'] = pOrder.id
+            continuation[-1].append(adder)
+        return continuation
+
 
 
 

@@ -4,8 +4,15 @@ import datetime
 import sys
 
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
-APCA_API_KEY_ID = "PK7L6LK63UD41XRYVRQV"
-APCA_API_SECRET_KEY = "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
+
+file = open(".env", 'r')
+file = file.read().split("\n")
+for value in file:
+    value = value.split("=")
+    if value[0] == "APCA_API_KEY_ID":
+        APCA_API_KEY_ID = value[1]
+    else:
+        APCA_API_SECRET_KEY = value[1]
 
 def getNeg(order):
     if (order.status!= "replaced") and (order.status!= "pending_replaced") and (order.status!= "pending_cancel") and (order.status!= "canceled") and (order.status!= "expired"):
@@ -34,7 +41,6 @@ for stock in api.list_orders(status='all'):
         else:
             new[stock.symbol].append(stock.id)
 
-print(new)
 continuation = []
 for stock in new:
     adder = {}
@@ -47,16 +53,18 @@ for stock in new:
             flag = False
         if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
             #print(orderDetails(order).symbol, orderDetails(order).qty, orderDetails(order).type, orderDetails(order).side, orderDetails(order).submitted_at, orderDetails(order).id)
-            print("order details", orderDetails(order))
+            #print("order details", orderDetails(order))
             if pOrder.type == 'limit' and pOrder.side == 'sell':
                 adder['limit_sell'] = pOrder.id
-            elif pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
+            if pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
                 adder['stop_limit'] = pOrder.id
-        elif pOrder.side == "buy" and pOrder.symbol == stock:
+        if pOrder.side == "buy" and pOrder.symbol == stock and pOrder.type == 'limit':
             adder['buy'] = pOrder.id
-        continuation[-1].append(adder) 
+            #print(pOrder)
+    continuation[-1].append(adder)
                 
 
 print(continuation)
+print(len(continuation))
 
 

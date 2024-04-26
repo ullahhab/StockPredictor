@@ -118,7 +118,8 @@ def getBuyOrder(orderId):
         return 0
 
 
-def setSecret(key, secret):
-    global api, APCA_API_BASE_URL
+def setSecret(key, secret, baseURL):
+    global api
+    APCA_API_BASE_URL = baseURL
     api = tradeapi.REST(key_id=key, secret_key=secret,
                     base_url=APCA_API_BASE_URL, api_version='v2')
