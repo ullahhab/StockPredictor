@@ -211,7 +211,13 @@ def sell():
             print("error occured", e)
 
 
-
-while float(accountValue())>0.0:
-    run_bot()
+valueRetry = 0
+while True:
+    if float(accountValue())>0.0:
+        run_bot()
+        valueRetry = 0
+    elif valueRetry>3:
+        break
+    else:
+        valueRetry+=1
     time.sleep(60)

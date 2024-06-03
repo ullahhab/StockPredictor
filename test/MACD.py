@@ -3,7 +3,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 
 # Download stock data
-ticker = "BTM"  # Replace with your desired ticker
+ticker = "AUST"  # Replace with your desired ticker
 data = yf.download(ticker, period="5y")  # Adjust period as needed
 
 # Calculate MACD
