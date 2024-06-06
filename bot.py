@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 # from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
-from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder
+from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder, orderDet
 from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
@@ -28,7 +28,6 @@ buyList = []
 timeoutForBuy = time.time()
 buySuspended = False
 suspensionReason = ""
-
 def seperate(value):
     return value.split("=")[1].strip(" ")
 
@@ -156,11 +155,19 @@ def buy():
                         print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
                         status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
+                            order = orderDet(orderId)
                             print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
                             bought = True
-                            sellList.append([stockBought, shares])
+                            if order!= None:
+                                limit_price = order.limit_price
+                                qty = order.qty
+                            else:
+                                limit_price = mon
+                                qty = shares
+                            sellList.append([stockBought, qty])
                             updateLastOrder(stockBought)
-                            money -= mon
+                            money = money - (limit_price * order.qty)
+                            print("money left", money)
                             retry = 0
                             break
                         elif(status == 500 and orderId=="timeout"):
@@ -168,7 +175,6 @@ def buy():
                             retry +=1
                     time.sleep(1)
                 except Exception as e:
-                    suspensionReason = e
                     print(e)
 
 
