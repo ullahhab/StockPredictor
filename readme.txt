@@ -1,4 +1,4 @@
-This product look at previous stock year performance and make a prediction if it would be good by or not. This program will work
+This product look at previous stock year performance and make a prediction if it would be good buy or not. This program will have a
 neural network and AI.
 Program will be divided in to steps
 #1 Neural network that would simply looking at the previous years and try to predict the price. 
