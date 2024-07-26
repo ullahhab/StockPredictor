@@ -14,10 +14,12 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret, cancelOrder
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
+import pytz
+from datetime import datetime, timedelta
 
 
 last5 = [0, 0, 0, 0, 0]
@@ -177,6 +179,13 @@ def buy():
                 except Exception as e:
                     print(e)
 
+def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
+    now = datetime.now(datetime.UTC).replace(tzinfo=pytz.UTC)
+    time_difference = now - time
+    print(f"printing time now = {now} and time={time} timeDifferenct = {time_difference}")
+    return time_difference>timedelta(days=day, hours=hours, weeks=weeks, minutes=minutes)
+
+
 
 def sell():
     global sellList, shares, money
@@ -195,6 +204,8 @@ def sell():
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
                     value = shares*high
                     print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",high-orderPrice, "net value:", accountValue())
+                elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), minutes=1):
+                    cancelOrder(stock[2]["buy"])
                 else:
                     print("unbought", stock[0])
                 limit_status = orderStatus(limit_orderId)

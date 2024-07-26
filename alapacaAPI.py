@@ -98,7 +98,6 @@ def orderDetails(symbl, orderId):
     except:
         return 0, 0
 
-
 def accountValue():
     try:
         return api.get_account().equity
@@ -117,6 +116,18 @@ def getBuyOrder(orderId):
     except:
         return 0
 
+def orderDet(id):
+    try:
+        updated_order = api.get_order(id)
+        return updated_order
+    except Exception as e:
+        print("something went wrong", e)
+
+def cancelOrder(id):
+    det = orderDet(id)
+    api.cancel_order(id)
+    return det.limit_price * det.shares
+     
 
 def setSecret(key, secret, baseURL):
     global api
