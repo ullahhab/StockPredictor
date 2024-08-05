@@ -1,6 +1,6 @@
 
 import yfinance as yf
-def run():
+def cleaner():
     stocklst = open("stocksList.csv", 'r')
     firtsLine = stocklst.readline()
     newFile = open("tmpFile.txt", 'w')
@@ -18,4 +18,3 @@ def run():
                 newFile.write(line+"\n")
         except:
             continue
-#run()
