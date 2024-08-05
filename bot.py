@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 # from stockListCleaner import *
 from alapacaAPI import limitTakeProfitStopLoss as putOrder
-from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder, orderDet
+from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder, orderDet, replaceSellLimitOrder
 from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
@@ -14,12 +14,13 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret, cancelOrder
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret, cancelOrder, LookForOrderId
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
 import pytz
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import traceback
 
 
 last5 = [0, 0, 0, 0, 0]
@@ -116,7 +117,8 @@ def analyze():
     except IndexError as e:
         pass
     except Exception as e:
-        print(e)
+        tb = traceback.format_exc()
+        print("trace", tb, "error", e)
 
 
 def buy():
@@ -154,11 +156,9 @@ def buy():
                         stockBought = stock[0]
                         shares = mon // low
                         sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                        print("Sanity check", sellPrice, stockBought, shares, sellNegative, buyPrice)
                         status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
-                            order = orderDet(orderId)
-                            print("sell price", sellPrice, "buy price", buyPrice, "Shares ", shares)
+                            order = orderDet(orderId['buy'])
                             bought = True
                             if order!= None:
                                 limit_price = order.limit_price
@@ -166,23 +166,23 @@ def buy():
                             else:
                                 limit_price = mon
                                 qty = shares
-                            sellList.append([stockBought, qty])
+                            sellList.append([stockBought, qty, orderId])
                             updateLastOrder(stockBought)
-                            money = money - (limit_price * order.qty)
-                            print("money left", money)
+                            money = money - (float(limit_price) * float(order.qty))
                             retry = 0
                             break
                         elif(status == 500 and orderId=="timeout"):
                             timeoutForBuy = 24*3600 + time.time()
                             retry +=1
+                    print(retry)
                     time.sleep(1)
                 except Exception as e:
-                    print(e)
+                    tb = traceback.format_exc()
+                    print("trace", tb, "error", e)
 
 def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
-    now = datetime.now(datetime.UTC).replace(tzinfo=pytz.UTC)
+    now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
     time_difference = now - time
-    print(f"printing time now = {now} and time={time} timeDifferenct = {time_difference}")
     return time_difference>timedelta(days=day, hours=hours, weeks=weeks, minutes=minutes)
 
 
@@ -196,18 +196,27 @@ def sell():
             if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
+                print("stock", stock)
                 if orderStatus(stock[2]["buy"])=='filled':
+                    if 'orderFilledTime' not in stock[2]:
+                        print("order not filled")
+                        det = orderDet(stock[2]["buy"])
+                        stock[2]['orderFilledTime'] = det.filled_at
                     orderPrice = getBuyOrder(stock[2]['buy'])
                     #Just to give enough time to ping
                     stockBought = stock[0]
                     shares = stock[1]
                     high, sellPrice = orderDetails(stockBought,limit_orderId)
                     value = shares*high
+                    if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=7):
+                        replaceSellLimitOrder(stock[2])
                     print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",high-orderPrice, "net value:", accountValue())
-                elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), minutes=1):
-                    cancelOrder(stock[2]["buy"])
-                else:
-                    print("unbought", stock[0])
+                elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), day=3):
+                    corderdet = cancelOrder(stock[2]["buy"])
+                    if corderdet[0].status == 'canceled':
+                        money+=corderdet[1]
+                        sellList.pop(sellList.index(stock))
+                        print(money)
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':
@@ -223,9 +232,11 @@ def sell():
                     sellList.pop(sellList.index(stock))
                     money += high * shares
             else:
-                getOrderId(stock[0], stock)
+                print("starting to look for order \n")
+                LookForOrderId(stock[0], stock)
         except Exception as e:
-            print("error occured", e)
+            tb = traceback.format_exc()
+            print("trace", tb, "error", e)
 
 
 valueRetry = 0

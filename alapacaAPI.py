@@ -1,15 +1,16 @@
 import alpaca_trade_api as tradeapi
 import time
 import datetime
+import traceback
 
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
-#APCA_API_KEY_ID = ""  # "PK7L6LK63UD41XRYVRQV"
-#APCA_API_SECRET_KEY = ""  # "FyMslIcTvjIYm8Mtzcw4NcLglTHbnOsnb3MK8AdF"
+
 
 api = ""
 
 
 def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_price):
+    orderIds = {}
     try:
         order = api.submit_order(symbol=symbol,
                              qty=qty,
@@ -36,18 +37,20 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
             if updated_order.status != 'rejected' and updated_order.status != "canceled" and updated_order.status != 'denied':  # or updated_order.status == 'accepted':
                 print("Order has been sent")
                 print("Order status", updated_order.status)
-                return 200, updated_order.id
+                getOrderId(orderIds, order)
+                return 200, orderIds
             elif updated_order.status == 'rejected' or updated_order.status == 'canceled' or updated_order.status == 'denied':
                 print("updated order", updated_order)
                 #print("Order has been ", updated_order.status, updated_order)
-                return 500, order.id
+                return 500, orderIds
             if tries >= 5:
                 print("issues putting the order", order.status)
-                return 500, order.id
+                return 500, orderIds
             if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
                 tries += 1
-    except Exception as e: 
-        print("Something bad happened\n reason:", e)
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("trace", tb, "error", e)
         return 500, "timeout"
         
 
@@ -59,12 +62,23 @@ def ChangeOrderStatus(id):
     except:
         return "unknown"
 
+def getOrderId(orderIds, orders):
+    try:
+        for order in orders.legs:
+            if order.side == "sell" and order.type == "limit":
+                orderIds["limitSell"] = order.id
+            elif order.side == "sell" and (order.type == "stop_limit" or order.type == "stop"):
+                orderIds["Stop_limit"] = order.id
+        orderIds["buy"] = orders.id
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(e, tb)
 
-def getOrderId(stock, lst):
+
+def LookForOrderId(stock, lst):
     orderIds = {}
     try:
         while len(orderIds)<3:
-            print("looking for orders: Found =", len(orderIds))
             for order in api.list_orders(status='all'):
                 if order.status != 'canceled' and order.status != 'rejected' and order.status!= 'filled' and order.status != 'replaced':
                     if order.side == "sell" and order.symbol == stock and order.type == "limit":
@@ -73,7 +87,6 @@ def getOrderId(stock, lst):
                         orderIds["Stop_limit"] = order.id
                 if order.side == "buy" and order.symbol == stock and order.type == 'limit':
                     orderIds["buy"] = order.id
-        print("found ", len(orderIds), "debug", orderIds)
         lst.append(orderIds)
     except Exception as e:
         pass
@@ -94,7 +107,7 @@ def orderDetails(symbl, orderId):
     try:
         order = api.get_latest_trade(symbl)
         limitPrice = api.get_order(orderId).limit_price
-        return order.price, limitPrice
+        return float(order.price), float(limitPrice)
     except:
         return 0, 0
 
@@ -124,13 +137,74 @@ def orderDet(id):
         print("something went wrong", e)
 
 def cancelOrder(id):
-    det = orderDet(id)
     api.cancel_order(id)
-    return det.limit_price * det.shares
-     
+    det = orderDet(id)
+    print("cancelled order details", det.status, det.limit_price, det.qty)
+    return det,(float(det.limit_price) * float(det.qty))
+
+def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice):
+    if type == 'limit':
+        order = api.submit_order(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            type=type,
+            limit_price=limitPrice,
+            time_in_force=time_in_force
+        )
+    elif type == 'stop_market':
+        order = api.submit_order(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            type=type,
+            stop_price=limitPrice,
+            time_in_force=time_in_force
+        )
+    return order
 
 def setSecret(key, secret, baseURL):
     global api
     APCA_API_BASE_URL = baseURL
     api = tradeapi.REST(key_id=key, secret_key=secret,
                     base_url=APCA_API_BASE_URL, api_version='v2')
+#instead send the orders dictionay:
+'''
+TODO:
+    1. update the time stamp here
+    2. update to include time stamp in orderIds
+
+def replaceSellOrder(ordersIds):
+    det = cancelOrder(ordersIds['limitSell'])[0] #item 0 is detail of the order, 2 is the money it for cancelling it
+    newLimitPrice = round(float(det.limit_price) -(float(det.limit_price) * 0.01), 2)
+    stopOrderId = ordersIds['Stop_limit']
+    stopOrder = orderDet(stopOrderId)
+    if(stopOrder.status != 'cancelled'):
+        api.cancel_order(stopOrderId)
+    stopPrice = stopOrder.stop_price
+    limitOrder = submitIndividualOrder(det.symbol,det.qty, 'sell', 'limit','gtc',newLimitPrice)
+    if limitOrder.status != 'rejected' and limitOrder.status != "canceled" and limitOrder.status != 'denied':
+        ordersIds['LimitSell'] = limitOrder.id
+    else:
+        return
+    stopOrder = submitIndividualOrder(det.symbol, det.qty,'sell', 'stop_market', 'gtc', stopPrice)
+    if stopOrder.status != 'rejected' and stopOrder.status != "canceled" and stopOrder.status != 'denied':
+        ordersIds['Stop_limit'] = stopOrder.id
+    else:
+        return
+    '''
+def replaceOrder(orderId, qty, newLimitPrice, time_in_force='gtc'):
+    order = api.replace_order(order_id = orderId, qty = qty, limit_price=newLimitPrice, time_in_force=time_in_force)
+    return order
+
+def replaceSellLimitOrder(ordersIds):
+    det = orderDet(ordersIds['limitSell'])
+    newLimitPrice = round(float(det.limit_price) -(float(det.limit_price) * 0.01), 2)
+    order = replaceOrder(ordersIds['limitSell'], det.qty, newLimitPrice, time_in_force='gtc')
+    ordersIds['limitSell'] = order.id
+
+    
+
+
+
+
