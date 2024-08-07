@@ -198,11 +198,12 @@ def replaceOrder(orderId, qty, newLimitPrice, time_in_force='gtc'):
     return order
 
 def replaceSellLimitOrder(ordersIds):
+    print("replacing order")
     det = orderDet(ordersIds['limitSell'])
     newLimitPrice = round(float(det.limit_price) -(float(det.limit_price) * 0.01), 2)
     order = replaceOrder(ordersIds['limitSell'], det.qty, newLimitPrice, time_in_force='gtc')
     ordersIds['limitSell'] = order.id
-
+    print("new id", order.id)
     
 
 

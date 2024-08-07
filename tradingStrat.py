@@ -1,6 +1,6 @@
 def strat(money):
     ret = []
-    while money>1:
+    while money>0:
         if money//10000:
             money -= 10000
             ret.append(10000)
@@ -13,4 +13,5 @@ def strat(money):
         elif money<100 and money>0:
             ret.append(money)
             money-=money
+    print(ret)
     return ret

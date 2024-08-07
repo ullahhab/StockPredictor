@@ -1,0 +1,4 @@
+from alpaca_trade_api.rest import REST, APIError
+Better error handling
+
+For APIError checking use this APIError
