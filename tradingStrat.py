@@ -13,5 +13,4 @@ def strat(money):
         elif money<100 and money>0:
             ret.append(money)
             money-=money
-    print(ret)
     return ret

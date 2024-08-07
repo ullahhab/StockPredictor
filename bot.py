@@ -62,7 +62,6 @@ if bought:
     value = float(seperate(botInfo[6]))
     orderId = seperate(botInfo[7])
     updateLastOrder(stockBought)
-    print(last5)
 else:
     stockBought = ""
     buyPrice = 0
@@ -85,11 +84,10 @@ botInfoRead.close()
 
 def run_bot():
     global sellList, goodForBuy, last5, money, buySuspended
-    print("money",money)
     if int(money)>1 and (not buySuspended):
         try:
-            cleaner()
-            doAnalysis()
+            #cleaner()
+            #doAnalysis()
             analyze()
         except Exception as e:
             print(e)
@@ -162,7 +160,6 @@ def buy():
                         status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
                             order = orderDet(orderId['buy'])
-                            bought = True
                             if order!= None:
                                 limit_price = order.limit_price
                                 qty = order.qty
@@ -176,7 +173,6 @@ def buy():
                             break
                         elif(status == 500 and orderId=="timeout"):
                             retry +=1
-                    print(retry)
                     time.sleep(1)
                 except Exception as e:
                     tb = traceback.format_exc()
@@ -198,13 +194,10 @@ def sell():
             if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
-                print("stock", stock)
                 if orderStatus(stock[2]["buy"])=='filled':
                     if 'orderFilledTime' not in stock[2]:
-                        print("order not filled")
                         det = orderDet(stock[2]["buy"])
                         stock[2]['orderFilledTime'] = det.filled_at
-                        print("submitted at", det.submitted_at, "filled at ", det.filled_at)
                     orderPrice = getBuyOrder(stock[2]['buy'])
                     #Just to give enough time to ping
                     stockBought = stock[0]
@@ -217,7 +210,6 @@ def sell():
                     if corderdet[0].status == 'canceled':
                         money+=corderdet[1]
                         sellList.pop(sellList.index(stock))
-                        print(money)
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 if limit_status == 'filled':
@@ -227,7 +219,8 @@ def sell():
                 elif stop_status == "filled":
                     sellList.pop(sellList.index(stock))
                     money += float(high) * float(shares)
-                elif getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
+                elif orderStatus(stock[2]["buy"])=='filled':
+                    if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
                         replaceSellLimitOrder(stock[2])
             else:
                 print("starting to look for order \n")
