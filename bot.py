@@ -5,8 +5,8 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import os
 # from stockListCleaner import *
-from alapacaAPI import limitTakeProfitStopLoss as putOrder
-from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrder, orderDet, replaceSellLimitOrder
+#from alapacaAPI import limitTakeProfitStopLoss as putOrder
+#from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder
 from UI import inputUI
 import tkinter as tk
 from tkinter import ttk
@@ -14,7 +14,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderDetails, orderPrice, setSecret, cancelOrder, LookForOrderId
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -198,13 +198,14 @@ def sell():
                     if 'orderFilledTime' not in stock[2]:
                         det = orderDet(stock[2]["buy"])
                         stock[2]['orderFilledTime'] = det.filled_at
-                    orderPrice = getBuyOrder(stock[2]['buy'])
+                    oPrice = getBuyOrderPrice(stock[2]['buy'])
                     #Just to give enough time to ping
-                    stockBought = stock[0]
+                    symbl = stock[0]
                     shares = stock[1]
-                    high, sellPrice = orderDetails(stockBought,limit_orderId)
+                    sellPrice = orderLimitPriceDetails(limit_orderId)
+                    high = orderPrice(symbl)
                     value = float(shares)*float(high)
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",high-orderPrice, "net value:", accountValue())
+                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",(high-oPrice)*shares, "net value:", accountValue())
                 elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), day=3):
                     corderdet = cancelOrder(stock[2]["buy"])
                     if corderdet[0].status == 'canceled':

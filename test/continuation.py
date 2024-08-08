@@ -23,6 +23,7 @@ def getNeg(order):
         return True
     return False
 
+
 def ChangeOrderStatus(id):
     updated_order = api.get_order(id)
     return updated_order
@@ -37,7 +38,7 @@ def orderDetails(orderId):
     limitPrice = api.get_order(orderId)
     return limitPrice
 
-for stock in api.list_orders(status='all'):
+'''for stock in api.list_orders(status='all'):
     if getNeg(stock) and stock.status!='filled':
         print(stock.symbol, stock.status)
         if stock.symbol not in new:
@@ -67,11 +68,11 @@ for stock in new:
             #print(pOrder)
     continuation[-1].append(adder)
 
-    
+ 
 
 print(continuation)
 print(len(continuation))
-
+'''
 def orderDet(id):
     try:
         updated_order = api.get_order(id)
@@ -162,6 +163,11 @@ def cancelOrder(id):
     print("cancelled order details", det.status, det.limit_price, det.qty)
     return det,(float(det.limit_price) * float(det.qty))
 
+def orderPrice(symbl):
+    try:
+        return api.get_latest_trade(symbl)
+    except:
+        return 0
 
 def replaceOrder(orderId, qty, newLimitPrice, time_in_force='gtc'):
     order = api.replace_order(order_id = orderId, qty = qty, limit_price=newLimitPrice, time_in_force=time_in_force)
@@ -194,9 +200,15 @@ def getOrderId(orderIds, orders):
         print(e, tb)
 
 #status, order, new = putOrder()
-print("waiting 10s")
-replaceSellLimitOrder({'limitSell': "3d51b7f5-77eb-4633-a96c-364853b31884", 'Stop_limit': '608ed1bf-77e2-4361-946a-e1c5094716fe'})
 
 #sellOrder()
 
 
+def getPrice(id, symbl):
+    det = orderDet(id)
+    print(det)
+    priceDet = orderPrice(symbl)
+    print((priceDet.price - float(det.filled_avg_price)) * float(det.filled_qty))
+
+
+getPrice('5deec550-540f-42b1-ad15-dd23e93d65df', 'AAPL')

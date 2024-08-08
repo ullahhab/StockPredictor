@@ -103,13 +103,12 @@ def getNeg(order):
 
 
 
-def orderDetails(symbl, orderId):
+def orderLimitPriceDetails(orderId):
     try:
-        order = api.get_latest_trade(symbl)
         limitPrice = api.get_order(orderId).limit_price
-        return float(order.price), float(limitPrice)
+        return float(limitPrice)
     except:
-        return 0, 0
+        return 0
 
 def accountValue():
     try:
@@ -123,9 +122,9 @@ def orderPrice(symbl):
     except:
         return 0
 
-def getBuyOrder(orderId):
+def getBuyOrderPrice(orderId):
     try:
-        return float(api.get_order(orderId).limit_price)
+        return float(api.get_order(orderId).filled_avg_price)
     except:
         return 0
 
@@ -198,12 +197,11 @@ def replaceOrder(orderId, qty, newLimitPrice, time_in_force='gtc'):
     return order
 
 def replaceSellLimitOrder(ordersIds):
-    print("replacing order")
     det = orderDet(ordersIds['limitSell'])
     newLimitPrice = round(float(det.limit_price) -(float(det.limit_price) * 0.01), 2)
     order = replaceOrder(ordersIds['limitSell'], det.qty, newLimitPrice, time_in_force='gtc')
     ordersIds['limitSell'] = order.id
-    print("new id", order.id)
+    time.sleep(1)
     
 
 
