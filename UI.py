@@ -96,7 +96,7 @@ class inputUI:
                     saveFile = messagebox.askyesno(title="Save Secrets", message="Would you like to save?")
                     if saveFile:
                         file = open(".env", 'w')
-                        file.write("APCA_API_KEY_ID="+str(api_entry.get())+"\nAPCA_API_SECRET_KEY="+str(secret_entry.get()))
+                        file.write("APCA_API_KEY_ID="+str(api_entry.get())+"\nAPCA_API_SECRET_KEY="+str(secret_entry.get())+"\nAPCA_API_BASE_URL="+str(url_entry.get()))
                         file.close()
                     secretsWindow.destroy()
                     self.root.deiconify()

@@ -211,4 +211,4 @@ def getPrice(id, symbl):
     print((priceDet.price - float(det.filled_avg_price)) * float(det.filled_qty))
 
 
-getPrice('5deec550-540f-42b1-ad15-dd23e93d65df', 'AAPL')
+getPrice('e316f8cb-cde7-4604-9b51-6d16c1577a0f', 'TSE')

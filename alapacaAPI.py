@@ -202,6 +202,33 @@ def replaceSellLimitOrder(ordersIds):
     order = replaceOrder(ordersIds['limitSell'], det.qty, newLimitPrice, time_in_force='gtc')
     ordersIds['limitSell'] = order.id
     time.sleep(1)
+
+
+def getOrderPriceDetails(orderIds):
+    buy = orderDet(orderIds['buy'])
+    sell = orderDet(orderIds['limitSell'])
+    stopLoss = orderDet(orderIds['Stop_limit'])
+
+    if buy.status == 'filled':
+        limitPrice = float(buy.filled_avg_price)
+    else:
+        limitPrice = float(buy.limit_price)
+    symbol = buy.symbol
+    share = float(buy.qty)
+    sellPrice = float(sell.limit_price)
+    stopLossPrice = float(stopLoss.stop_price)
+    ordPrice = orderPrice(symbol)
+
+    print(f'Stock={symbol} prices buy={limitPrice} sell price={sellPrice} current={ordPrice} stop loss={stopLossPrice} profit/loss={float(share)*(ordPrice-limitPrice)}')
+
+
+def calculateMoney(orderId):
+    det = orderDet(orderId)
+    return float(det.filled_avg_price) * float(det.filled_qty), det.filled_qty == det.qty
+
+
+
+
     
 
 

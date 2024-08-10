@@ -14,7 +14,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -182,8 +182,19 @@ def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
     now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
     time_difference = now - time
     return time_difference>timedelta(days=day, hours=hours, weeks=weeks, minutes=minutes)
+'''
+#TODO: 1. When we buy a stock and if the stop loss is excecuted with 3 strikes switch to paper account do simulations until you get 3 strikes back
+       2. Gather the info for which stocks it has been successfull and only use the stock that has prediction success rate to be more than 70%
+       3. If no prediction assume prediction to be 100% and adjust accordingly
+       
+       Second working prototype
+       Check market idicators. If bearish push for buy and if market is bullish force sell for profit.
+       apply moving avgs for stocks(I think it's already implemented just need adjustments)
 
-
+       Third working prototype
+       A gui that will cancel allow you to cancel and do other things like start and stop
+       
+'''
 
 def sell():
     global sellList, shares, money
@@ -198,14 +209,7 @@ def sell():
                     if 'orderFilledTime' not in stock[2]:
                         det = orderDet(stock[2]["buy"])
                         stock[2]['orderFilledTime'] = det.filled_at
-                    oPrice = getBuyOrderPrice(stock[2]['buy'])
-                    #Just to give enough time to ping
-                    symbl = stock[0]
-                    shares = stock[1]
-                    sellPrice = orderLimitPriceDetails(limit_orderId)
-                    high = orderPrice(symbl)
-                    value = float(shares)*float(high)
-                    print("stock Bought", stockBought, "current price", high, "sell price", sellPrice, "value ", value, "P/L",(high-oPrice)*shares, "net value:", accountValue())
+                    getOrderPriceDetails(stock[2])
                 elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), day=3):
                     corderdet = cancelOrder(stock[2]["buy"])
                     if corderdet[0].status == 'canceled':
@@ -213,13 +217,18 @@ def sell():
                         sellList.pop(sellList.index(stock))
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
+                #TODO: make it robust so if half n half than apply that price
                 if limit_status == 'filled':
                     # remove the order from the list, update the money, and update file
-                    sellList.pop(sellList.index(stock))
-                    money += float(high) * float(shares)
+                    filledmoney,remove= calculateMoney(limit_orderId)
+                    if remove:
+                        sellList.pop(sellList.index(stock))
+                        money += filledmoney
                 elif stop_status == "filled":
-                    sellList.pop(sellList.index(stock))
-                    money += float(high) * float(shares)
+                    filledmoney, remove = calculateMoney(stop_orderId)
+                    if remove:
+                        sellList.pop(sellList.index(stock))
+                        money += filledmoney
                 elif orderStatus(stock[2]["buy"])=='filled':
                     if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
                         replaceSellLimitOrder(stock[2])
