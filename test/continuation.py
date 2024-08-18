@@ -34,25 +34,59 @@ api = tradeapi.REST(key_id=APCA_API_KEY_ID, secret_key=APCA_API_SECRET_KEY,
 
 new = {}
 
+def orderDet(id):
+    try:
+        updated_order = api.get_order(id)
+        return updated_order
+    except Exception as e:
+        print("something went wrong", e)
+
 def orderDetails(orderId):
     limitPrice = api.get_order(orderId)
     return limitPrice
 
-'''for stock in api.list_orders(status='all'):
-    if getNeg(stock) and stock.status!='filled':
-        print(stock.symbol, stock.status)
+def checkExcecution(order1, order2):
+    return (order1.filled_at==None) and (order2.filled_at==None)
+
+for stock in api.list_orders(status='all', side='buy'):
+    if getNeg(stock):
         if stock.symbol not in new:
             new[stock.symbol] = [stock.id]
         else:
             new[stock.symbol].append(stock.id)
-
 continuation = []
+tracker = []
 for stock in new:
-    adder = {}
     flag = True
     for order in new[stock]:
         time.sleep(0.2)
-        pOrder = orderDetails(order)
+        adder = {}
+        pOrder = orderDet(order)
+        if pOrder.legs:
+            if pOrder.symbol in tracker:
+                print(pOrder.symbol, pOrder.qty,"is available more than once")
+            else:
+                tracker.append(pOrder.symbol)
+            print("obj0",pOrder.legs[0].side, pOrder.legs[0].type)
+            print("obj1",pOrder.legs[1].side, pOrder.legs[1].type)
+           # print(checkExcecution(pOrder.legs[0], pOrder.legs[1]))
+            if getNeg(pOrder.legs[0]) and getNeg(pOrder.legs[1]) and checkExcecution(pOrder.legs[0], pOrder.legs[1]):
+                #print("Order has not been excecuted", pOrder.legs[0].symbol)
+                adder['buy'] = pOrder.id
+                if pOrder.legs[0].side == 'sell' and pOrder.legs[0].type == 'limit':
+                    adder['limit_sell'] = pOrder.legs[0].id
+                if pOrder.legs[0].side == "sell" and (pOrder.legs[0].type == "stop_limit" or pOrder.legs[0].type == "stop"):
+                    adder['stop_limit'] = pOrder.legs[0].id
+                if pOrder.legs[1].side == 'sell' and pOrder.legs[1].type == 'limit':
+                    adder['limit_sell'] = pOrder.legs[1].id
+                if pOrder.legs[1].side == "sell" and (pOrder.legs[1].type == "stop_limit" or pOrder.legs[1].type == "stop"):
+                    adder['stop_limit'] = pOrder.legs[1].id
+                continuation.append([pOrder.symbol, pOrder.qty, adder])
+            #else: print("order has been excecuted", pOrder.symbol)
+            #for leg in pOrder.legs:\
+print("leg 1",pOrder.legs[1])
+print("leg 0", pOrder.legs[0])
+'''
         if flag:
             continuation.append([pOrder.symbol, pOrder.qty])
             flag = False
@@ -67,18 +101,13 @@ for stock in new:
             adder['buy'] = pOrder.id
             #print(pOrder)
     continuation[-1].append(adder)
-
+'''
  
 
 print(continuation)
 print(len(continuation))
-'''
-def orderDet(id):
-    try:
-        updated_order = api.get_order(id)
-        return updated_order
-    except Exception as e:
-        print("something went wrong", e)
+
+
 
 def sellOrder(shares=4, symbol='AAPL', side='sell',type='stop_limit', limitPrice=250, stopPrice=210):
     order = api.submit_order(

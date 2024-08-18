@@ -76,21 +76,23 @@ else:
     root.mainloop()
     money = inputui.getValue()
     key, secret, url = inputui.getSecret()
+    setSecret(key, secret, url)
     if inputui.Cont.get():
         sellList = inputui.cont(key, secret)
-    setSecret(key, secret, url)
+    
 botInfoRead.close()
 
 
 def run_bot():
     global sellList, goodForBuy, last5, money, buySuspended
     if int(money)>1 and (not buySuspended):
-        try:
+        print("money", int(money), not buySuspended)
+        '''try:
             #cleaner()
             #doAnalysis()
             analyze()
         except Exception as e:
-            print(e)
+            print(e)'''
     lock = threading.Lock()
 
     buyThread = threading.Thread(target=buy, name="buyThread", args=())
@@ -133,6 +135,13 @@ def buy():
         print("reason for suspension", suspensionReason)
         buySuspended = True
         return
+    if int(money)>1:
+        try:
+            cleaner()
+            doAnalysis()
+            analyze()
+        except Exception as e:
+            print(e)
     buySuspended = False
     for mon in buyingPower:
         if retry > 10:
@@ -149,9 +158,8 @@ def buy():
                         num = random.randint(0, len(goodForBuy)-1)
                     stock = goodForBuy[num]
                     low = orderPrice(stock[0])
-                    print(stock[0], low)
                     if round(float(stock[2]), 2) >=low and money>=low:
-                        print("stock",stock[0],"stock buy Price",stock[2], "Current Stock Price", low, "Value", mon)
+                        print(f"stock: {stock[0]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                         buyPrice = low
                         sellPrice = round((low+(float(stock[1])/2)),2)
                         stockBought = stock[0]
@@ -172,11 +180,13 @@ def buy():
                             retry = 0
                             break
                         elif(status == 500 and orderId=="timeout"):
+                            #reason can be updated here
                             retry +=1
                     time.sleep(1)
                 except Exception as e:
                     tb = traceback.format_exc()
                     print("trace", tb, "error", e)
+                    suspensionReason = e
 
 def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
     now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
@@ -200,12 +210,13 @@ def sell():
     global sellList, shares, money
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
     for stock in sellList:
-        time.sleep(0.2)
+        time.sleep(1)
         try:
             if len(stock)>=3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
-                if orderStatus(stock[2]["buy"])=='filled':
+                orderBuyStatus = orderStatus(stock[2]["buy"])
+                if orderBuyStatus=='filled':
                     if 'orderFilledTime' not in stock[2]:
                         det = orderDet(stock[2]["buy"])
                         stock[2]['orderFilledTime'] = det.filled_at
@@ -215,6 +226,13 @@ def sell():
                     if corderdet[0].status == 'canceled':
                         money+=corderdet[1]
                         sellList.pop(sellList.index(stock))
+                elif 'canceled' == orderBuyStatus:
+                    #remove the stock and get the money
+                    mon, remove = calculateMoney(stock[2]['buy'])
+                    print("money before cancel", money)
+                    money+=mon
+                    sellList.pop(sellList.index(stock))
+                    print("money after cancel", money)
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 #TODO: make it robust so if half n half than apply that price

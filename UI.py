@@ -8,6 +8,7 @@ import time
 import os
 from tkinter import messagebox
 from tkinter import IntVar
+from alapacaAPI import orderDet
 
 
 class inputUI:
@@ -202,44 +203,41 @@ class inputUI:
                 return True
             return False
 
-        def ChangeOrderStatus(id):
-            updated_order = api.get_order(id)
-            return updated_order
-
         api = tradeapi.REST(key_id=key, secret_key=secret, 
                             base_url=APCA_API_BASE_URL, api_version='v2')
 
 
         new = {}
 
-        def orderDetails(orderId):
-            limitPrice = api.get_order(orderId)
-            return limitPrice
+        def checkExcecution(order1, order2):
+            return (order1.filled_at==None) and (order2.filled_at==None)
 
-        for stock in api.list_orders(status='all'):
-            if getNeg(stock) and stock.status!='filled':
+        for stock in api.list_orders(status='all', side='buy'):
+            if getNeg(stock):
                 if stock.symbol not in new:
                     new[stock.symbol] = [stock.id]
                 else:
                     new[stock.symbol].append(stock.id)
         continuation = []
         for stock in new:
-            adder = {}
             flag = True
             for order in new[stock]:
-                time.sleep(1)
-                pOrder = orderDetails(order)
-                if flag:
-                    continuation.append([pOrder.symbol, pOrder.qty])
-                    flag = False
-                if getNeg(ChangeOrderStatus(order)) and ChangeOrderStatus(order).status!='filled':
-                    if pOrder.type == 'limit' and pOrder.side == 'sell':
-                        adder['limitSell'] = pOrder.id
-                    if pOrder.side == "sell" and (pOrder.type == "stop_limit" or pOrder.type == "stop"):
-                        adder['Stop_limit'] = pOrder.id
-                if pOrder.side == "buy" and pOrder.symbol == stock and pOrder.type == 'limit':
-                    adder['buy'] = pOrder.id
-            continuation[-1].append(adder)
+                time.sleep(0.2)
+                adder = {}
+                pOrder = orderDet(order)
+                if pOrder.legs:
+                    if getNeg(pOrder.legs[0]) and getNeg(pOrder.legs[1]) and checkExcecution(pOrder.legs[0], pOrder.legs[1]):
+                        adder['buy'] = pOrder.id
+                        if pOrder.legs[0].side == 'sell' and pOrder.legs[0].type == 'limit':
+                            adder['limitSell'] = pOrder.legs[0].id
+                        if pOrder.legs[0].side == "sell" and (pOrder.legs[0].type == "stop_limit" or pOrder.legs[0].type == "stop"):
+                            adder['Stop_limit'] = pOrder.legs[0].id
+                        if pOrder.legs[1].side == 'sell' and pOrder.legs[1].type == 'limit':
+                            adder['limitSell'] = pOrder.legs[1].id
+                        if pOrder.legs[1].side == "sell" and (pOrder.legs[1].type == "stop_limit" or pOrder.legs[1].type == "stop"):
+                            adder['Stop_limit'] = pOrder.legs[1].id
+                        continuation.append([pOrder.symbol, pOrder.qty, adder])
+        print(continuation)
         return continuation
 
 
