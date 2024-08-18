@@ -136,11 +136,13 @@ def orderDet(id):
         print("something went wrong", e)
 
 def cancelOrder(id):
-    api.cancel_order(id)
     det = orderDet(id)
-    print("cancelled order details", det.status, det.limit_price, det.qty)
-    return det,(float(det.limit_price) * float(det.qty))
-
+    try:
+        api.cancel_order(id)
+        det = orderDet(id)
+        return det,(float(det.limit_price) * float(det.qty))
+    except:
+        return det 
 def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice):
     if type == 'limit':
         order = api.submit_order(
@@ -224,7 +226,30 @@ def getOrderPriceDetails(orderIds):
 
 def calculateMoney(orderId):
     det = orderDet(orderId)
+    if 'cancel' in det.status:
+        return float(det.limit_price)* float(det.qty), True
     return float(det.filled_avg_price) * float(det.filled_qty), det.filled_qty == det.qty
+
+"""Exclude flag will maintain it's own existance. Exclude is the status that will result in any status that is not in the array otherwise true however if you provide 
+that flag and do not provide list it will result in true or false for other logic"""
+def orderStatus(orderId=None, 
+                status="",
+                exclude=False,
+                stat=""
+                ):
+    if status.__class__ == list:
+        if orderId:
+            det = orderDet(orderId)
+            stat = det.status
+        if exclude:
+            return stat not in status
+        else:
+            return stat in status
+    else:
+        #TODO: DO something with the data
+        return det.status == status
+
+
 
 
 
