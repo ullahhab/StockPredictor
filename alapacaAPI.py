@@ -24,7 +24,7 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                                  # limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
                              ),
                              take_profit=dict(
-                                 limit_price=round((take_profit_price - (take_profit_price * 0.01)), 2),
+                                 limit_price=round(take_profit_price, 2), #limit_price=round((take_profit_price - (take_profit_price * 0.01)), 2),
                              )
                              )
         tries = 1
@@ -138,8 +138,9 @@ def orderDet(id):
 def cancelOrder(id):
     det = orderDet(id)
     try:
-        api.cancel_order(id)
-        det = orderDet(id)
+        if 'cancel' not in det.status:
+            api.cancel_order(id)
+            det = orderDet(id)
         return det,(float(det.limit_price) * float(det.qty))
     except:
         return det 
@@ -221,7 +222,7 @@ def getOrderPriceDetails(orderIds):
     stopLossPrice = float(stopLoss.stop_price)
     ordPrice = orderPrice(symbol)
 
-    print(f'Stock={symbol} prices buy={limitPrice} sell price={sellPrice} current={ordPrice} stop loss={stopLossPrice} profit/loss={float(share)*(ordPrice-limitPrice)}')
+    print(f'Stock= {symbol} buy price={limitPrice} sell price={sellPrice} current={ordPrice} stop loss={stopLossPrice} shares owned={share} profit/loss={float(share)*(ordPrice-limitPrice)}')
 
 
 def calculateMoney(orderId):

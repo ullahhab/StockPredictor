@@ -85,14 +85,6 @@ botInfoRead.close()
 
 def run_bot():
     global sellList, goodForBuy, last5, money, buySuspended
-    if int(money)>1 and (not buySuspended):
-        print("money", int(money), not buySuspended)
-        '''try:
-            #cleaner()
-            #doAnalysis()
-            analyze()
-        except Exception as e:
-            print(e)'''
     lock = threading.Lock()
 
     buyThread = threading.Thread(target=buy, name="buyThread", args=())
@@ -108,14 +100,13 @@ def run_bot():
 
 def analyze():
     global buyPrice, sellPrice
-    file = open("stocks.csv", 'r')
+    file = open("stocksList.csv", 'r')
     file.readline()
     file = file.read().split('\n')
     try:
         for line in file:
             stock = line.split(",")
-            if float(stock[2]) <= float(stock[11]):
-                goodForBuy.append(stock)
+            goodForBuy.append(stock[0])
     except IndexError as e:
         pass
     except Exception as e:
@@ -135,13 +126,13 @@ def buy():
         print("reason for suspension", suspensionReason)
         buySuspended = True
         return
-    if int(money)>1:
+    '''if int(money)>1:
         try:
             cleaner()
             doAnalysis()
             analyze()
         except Exception as e:
-            print(e)
+            print(e)'''
     buySuspended = False
     for mon in buyingPower:
         if retry > 10:
@@ -156,12 +147,12 @@ def buy():
                     num = random.randint(0, len(goodForBuy)-1)
                     while num in randomList and goodForBuy[num] in last5:
                         num = random.randint(0, len(goodForBuy)-1)
-                    stock = goodForBuy[num]
+                    stock = getSingleTicker(goodForBuy[num])
                     low = orderPrice(stock[0])
                     if round(float(stock[2]), 2) >=low and money>=low:
                         print(f"stock: {stock[0]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                         buyPrice = low
-                        sellPrice = round((low+(float(stock[1])/2)),2)
+                        sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
                         stockBought = stock[0]
                         shares = mon // low
                         sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
@@ -229,10 +220,8 @@ def sell():
                 elif 'canceled' == orderBuyStatus:
                     #remove the stock and get the money
                     mon, remove = calculateMoney(stock[2]['buy'])
-                    print("money before cancel", money)
                     money+=mon
                     sellList.pop(sellList.index(stock))
-                    print("money after cancel", money)
                 limit_status = orderStatus(limit_orderId)
                 stop_status = orderStatus(stop_orderId)
                 #TODO: make it robust so if half n half than apply that price
@@ -259,6 +248,7 @@ def sell():
 
 
 valueRetry = 0
+analyze()
 while True:
     if float(accountValue())>0.0:
         run_bot()
