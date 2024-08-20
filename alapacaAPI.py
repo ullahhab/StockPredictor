@@ -38,20 +38,20 @@ def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_pri
                 print("Order has been sent")
                 print("Order status", updated_order.status)
                 getOrderId(orderIds, order)
-                return 200, orderIds
+                return 200, orderIds, ""
             elif updated_order.status == 'rejected' or updated_order.status == 'canceled' or updated_order.status == 'denied':
                 print("updated order", updated_order)
                 #print("Order has been ", updated_order.status, updated_order)
-                return 500, orderIds
+                return 500, orderIds, order.status
             if tries >= 5:
                 print("issues putting the order", order.status)
-                return 500, orderIds
+                return 500, orderIds, order.status
             if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
                 tries += 1
     except Exception as e:
         tb = traceback.format_exc()
         print("trace", tb, "error", e)
-        return 500, "timeout"
+        return 500, "timeout", e
         
 
 

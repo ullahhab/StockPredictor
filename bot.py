@@ -150,7 +150,7 @@ def buy():
                         stockBought = stock[0]
                         shares = mon // low
                         sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                        status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                        status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
                             order = orderDet(orderId['buy'])
                             if order!= None:
@@ -166,6 +166,7 @@ def buy():
                             break
                         elif(status == 500 and orderId=="timeout"):
                             #reason can be updated here
+                            suspensionReason += f"{reason}\n"
                             retry +=1
                     time.sleep(1)
                 except APIError as e:
