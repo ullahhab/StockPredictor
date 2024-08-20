@@ -4,6 +4,7 @@ import time
 import yfinance as yf
 import matplotlib.pyplot as plt
 import os
+from alpaca_trade_api.rest import APIError
 # from stockListCleaner import *
 #from alapacaAPI import limitTakeProfitStopLoss as putOrder
 #from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder
@@ -167,10 +168,12 @@ def buy():
                             #reason can be updated here
                             retry +=1
                     time.sleep(1)
+                except APIError as e:
+                    suspensionReason += str(e)+"\n"
+
                 except Exception as e:
                     tb = traceback.format_exc()
                     print("trace", tb, "error", e)
-                    suspensionReason = e
 
 def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
     now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
