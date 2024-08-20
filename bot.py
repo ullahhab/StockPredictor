@@ -31,7 +31,7 @@ sellList = []
 buyList = []
 timeoutForBuy = time.time()
 buySuspended = False
-suspensionReason = ""
+suspensionReason = set()
 def seperate(value):
     return value.split("=")[1].strip(" ")
 
@@ -127,6 +127,7 @@ def buy():
         print("reason for suspension", suspensionReason)
         buySuspended = True
         return
+    suspensionReason = set()
     buySuspended = False
     for mon in buyingPower:
         if retry > 10:
@@ -166,7 +167,7 @@ def buy():
                             break
                         elif(status == 500 and orderId=="timeout"):
                             #reason can be updated here
-                            suspensionReason += f"{reason}\n"
+                            suspensionReason.add(reason)
                             retry +=1
                     time.sleep(1)
                 except APIError as e:
