@@ -124,7 +124,9 @@ def buy():
     buyingPower = strat(money)
     if timeoutForBuy > time.time():
         print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
-        print("reason for suspension", suspensionReason)
+        print("reason for suspension") 
+        for reason in suspensionReason:
+            print(f"\t{reason}")
         buySuspended = True
         return
     suspensionReason = set()
@@ -167,7 +169,7 @@ def buy():
                             break
                         elif(status == 500 and orderId=="timeout"):
                             #reason can be updated here
-                            suspensionReason.add(reason)
+                            suspensionReason.add(f"{reason}")
                             retry +=1
                     time.sleep(1)
                 except APIError as e:
