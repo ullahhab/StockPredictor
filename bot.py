@@ -126,13 +126,6 @@ def buy():
         print("reason for suspension", suspensionReason)
         buySuspended = True
         return
-    '''if int(money)>1:
-        try:
-            cleaner()
-            doAnalysis()
-            analyze()
-        except Exception as e:
-            print(e)'''
     buySuspended = False
     for mon in buyingPower:
         if retry > 10:
