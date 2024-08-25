@@ -224,6 +224,8 @@ def getOrderPriceDetails(orderIds):
 
     print(f'Stock= {symbol} buy price={limitPrice} sell price={sellPrice} current={ordPrice} stop loss={stopLossPrice} shares owned={share} profit/loss={float(share)*(ordPrice-limitPrice)}')
 
+def getAllStock():
+    return api.list_assets(status='active')
 
 def calculateMoney(orderId):
     det = orderDet(orderId)
@@ -250,7 +252,8 @@ def orderStatus(orderId=None,
         #TODO: DO something with the data
         return det.status == status
 
-
+def isShortable(symbol):
+    return api.get_asset(symbol).easy_to_borrow
 
 
 

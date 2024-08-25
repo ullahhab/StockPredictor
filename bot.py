@@ -15,7 +15,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney, getAllStock as activeList
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -101,13 +101,11 @@ def run_bot():
 
 def analyze():
     global buyPrice, sellPrice
-    file = open("stocksList.csv", 'r')
-    file.readline()
-    file = file.read().split('\n')
+    stockList = activeList()
     try:
-        for line in file:
-            stock = line.split(",")
-            goodForBuy.append(stock[0])
+        for stock in stockList:
+            goodForBuy.append(stock.symbol)
+        print(len(goodForBuy))
     except IndexError as e:
         pass
     except Exception as e:

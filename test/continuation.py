@@ -47,7 +47,7 @@ def orderDetails(orderId):
 
 def checkExcecution(order1, order2):
     return (order1.filled_at==None) and (order2.filled_at==None)
-
+"""
 for stock in api.list_orders(status='all', side='buy'):
     if getNeg(stock):
         if stock.symbol not in new:
@@ -106,7 +106,7 @@ print("leg 0", pOrder.legs[0])
 
 print(continuation)
 print(len(continuation))
-
+"""
 
 
 def sellOrder(shares=4, symbol='AAPL', side='sell',type='stop_limit', limitPrice=250, stopPrice=210):
@@ -240,4 +240,30 @@ def getPrice(id, symbl):
     print((priceDet.price - float(det.filled_avg_price)) * float(det.filled_qty))
 
 
-getPrice('e316f8cb-cde7-4604-9b51-6d16c1577a0f', 'TSE')
+#getPrice('e316f8cb-cde7-4604-9b51-6d16c1577a0f', 'TSE')
+
+
+stock_symbol = 'AAPL'
+
+# Get quote for the specified stock
+
+active_assets = api.list_assets(status='active')
+
+
+print(len(active_assets))
+borrow = {}
+for stock in active_assets:
+    if stock.easy_to_borrow:
+        borrow[stock] = True
+        print(stock)
+        print(f"stock {stock.symbol} is easy to borrow: {stock.easy_to_borrow}")
+print(len(borrow))
+#for stock in active_assets:
+    #print(stock.symbol)
+# Check if the stock is easy to borrow
+#is_easy_to_borrow = quote.easy_to_borrow
+
+#if is_easy_to_borrow:
+ #   print(f"{stock_symbol} is easy to borrow.")
+#else:
+ #   print(f"{stock_symbol} is not easy to borrow.")
