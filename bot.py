@@ -4,6 +4,7 @@ import time
 import yfinance as yf
 import matplotlib.pyplot as plt
 import os
+from alpaca_trade_api.rest import APIError
 # from stockListCleaner import *
 #from alapacaAPI import limitTakeProfitStopLoss as putOrder
 #from alapacaAPI import ChangeOrderStatus as orderStatus, accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder
@@ -14,7 +15,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney, getAllStock as activeList
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -22,7 +23,7 @@ import pytz
 from datetime import datetime, timedelta, timezone
 import traceback
 
-
+printed = False
 last5 = [0, 0, 0, 0, 0]
 goodForBuy = []
 counter = 0
@@ -30,7 +31,7 @@ sellList = []
 buyList = []
 timeoutForBuy = time.time()
 buySuspended = False
-suspensionReason = ""
+suspensionReason = set()
 def seperate(value):
     return value.split("=")[1].strip(" ")
 
@@ -100,13 +101,10 @@ def run_bot():
 
 def analyze():
     global buyPrice, sellPrice
-    file = open("stocksList.csv", 'r')
-    file.readline()
-    file = file.read().split('\n')
+    stockList = activeList()
     try:
-        for line in file:
-            stock = line.split(",")
-            goodForBuy.append(stock[0])
+        for stock in stockList:
+            goodForBuy.append(stock.symbol)
     except IndexError as e:
         pass
     except Exception as e:
@@ -116,17 +114,23 @@ def analyze():
 
 def buy():
     retry = 0
-    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason
+    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason, printed
     mon = 0
     if int(money)<=1:
         return
     buyingPower = strat(money)
     if timeoutForBuy > time.time():
-        print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
-        print("reason for suspension", suspensionReason)
+        if not printed:
+            print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
+            print("reason for suspension") 
+            for reason in suspensionReason:
+                print(f"\t{reason}")
         buySuspended = True
+        printed=True
         return
+    suspensionReason = set()
     buySuspended = False
+    printed=False
     for mon in buyingPower:
         if retry > 10:
             break
@@ -142,14 +146,14 @@ def buy():
                         num = random.randint(0, len(goodForBuy)-1)
                     stock = getSingleTicker(goodForBuy[num])
                     low = orderPrice(stock[0])
-                    if round(float(stock[2]), 2) >=low and money>=low:
+                    if round(float(stock[2]), 2) >=low and money>=low and stock[-1]>=(3*(mon/low)):
                         print(f"stock: {stock[0]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                         buyPrice = low
                         sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
                         stockBought = stock[0]
                         shares = mon // low
                         sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                        status, orderId = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                        status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
                         if status == 200:
                             order = orderDet(orderId['buy'])
                             if order!= None:
@@ -165,12 +169,15 @@ def buy():
                             break
                         elif(status == 500 and orderId=="timeout"):
                             #reason can be updated here
+                            suspensionReason.add(f"{reason}")
                             retry +=1
                     time.sleep(1)
+                except APIError as e:
+                    suspensionReason += str(e)+"\n"
+
                 except Exception as e:
                     tb = traceback.format_exc()
                     print("trace", tb, "error", e)
-                    suspensionReason = e
 
 def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
     now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
