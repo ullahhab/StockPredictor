@@ -23,7 +23,7 @@ import pytz
 from datetime import datetime, timedelta, timezone
 import traceback
 
-
+printed = False
 last5 = [0, 0, 0, 0, 0]
 goodForBuy = []
 counter = 0
@@ -115,20 +115,23 @@ def analyze():
 
 def buy():
     retry = 0
-    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason
+    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason, printed
     mon = 0
     if int(money)<=1:
         return
     buyingPower = strat(money)
     if timeoutForBuy > time.time():
-        print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
-        print("reason for suspension") 
-        for reason in suspensionReason:
-            print(f"\t{reason}")
+        if not printed:
+            print("buy suspended for ", (timeoutForBuy-time.time())//3600, "hours and ",((timeoutForBuy-time.time())%3600)//60, "minutes", "will resume at", datetime.fromtimestamp(timeoutForBuy))
+            print("reason for suspension") 
+            for reason in suspensionReason:
+                print(f"\t{reason}")
         buySuspended = True
+        printed=True
         return
     suspensionReason = set()
     buySuspended = False
+    printed=False
     for mon in buyingPower:
         if retry > 10:
             break
@@ -144,7 +147,7 @@ def buy():
                         num = random.randint(0, len(goodForBuy)-1)
                     stock = getSingleTicker(goodForBuy[num])
                     low = orderPrice(stock[0])
-                    if round(float(stock[2]), 2) >=low and money>=low:
+                    if round(float(stock[2]), 2) >=low and money>=low and stock[-1]>=(3*(mon/low)):
                         print(f"stock: {stock[0]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                         buyPrice = low
                         sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)

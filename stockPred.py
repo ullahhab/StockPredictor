@@ -163,6 +163,7 @@ def getSingleTicker(symbol):
         data = yf.download(stock, period='5d', progress=False)
         if len(data) == 0:
             print(data)
+        volume = 0
         counter+=1
         dailyavgChange = 0
         weeklyavgChange = 0
@@ -190,6 +191,7 @@ def getSingleTicker(symbol):
             weekend += abs(row['High']- row['Low'])
             avglow += row['Low']
             avghigh += row['High']
+            volume += row['Volume']
             dailyAvgPrice+= row['Close']
             weeklyPrice +=row['Close']
             if(row['High']> highest):
@@ -212,6 +214,7 @@ def getSingleTicker(symbol):
         dailyAvgPrice = dailyAvgPrice/dailyCount
         avglow = avglow/dailyCount
         avghigh = avghigh/dailyCount
+        avgVolume = volume/dailyCount
         #RSI = 100 - [100 / (1 + RS)]
         if dailyCount ==0 or sum(positive) == 0:
             RSI = 0
@@ -226,7 +229,7 @@ def getSingleTicker(symbol):
         else:
             Rating = "Normal"
         #file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Close'])+"\n")
-        return stock, dailyavgChange, avglow, avghigh, weeklyavgChange, (dailyavgChange / row['Low'])*100, highest, lowest, dailyavgChange, RSI, Rating, row['Close']
+        return stock, dailyavgChange, avglow, avghigh, weeklyavgChange, (dailyavgChange / row['Low'])*100, highest, lowest, dailyavgChange, RSI, Rating, row['Close'], avgVolume
     except Exception as e:
         print(e)
     file.close()
