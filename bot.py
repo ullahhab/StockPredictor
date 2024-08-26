@@ -105,7 +105,6 @@ def analyze():
     try:
         for stock in stockList:
             goodForBuy.append(stock.symbol)
-        print(len(goodForBuy))
     except IndexError as e:
         pass
     except Exception as e:
