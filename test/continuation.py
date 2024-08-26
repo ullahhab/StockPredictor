@@ -3,6 +3,7 @@ import time
 import datetime
 import sys
 import traceback
+import yfinance as yf
 
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
 
@@ -242,7 +243,7 @@ def getPrice(id, symbl):
 
 #getPrice('e316f8cb-cde7-4604-9b51-6d16c1577a0f', 'TSE')
 
-
+'''
 stock_symbol = 'AAPL'
 
 # Get quote for the specified stock
@@ -267,3 +268,51 @@ print(len(borrow))
  #   print(f"{stock_symbol} is easy to borrow.")
 #else:
  #   print(f"{stock_symbol} is not easy to borrow.")
+
+'''
+
+file = open("furtherAnalysis.txt", 'w')
+def check_stock_trend(ticker):
+    try:
+        ticker = ticker.split('/')[0]
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="5d", interval='1d')
+        low = 0
+        high = 0
+        volume = 0
+        for index, (date, row) in enumerate(hist.iterrows()):
+            low += row['Low']
+            high += row['High']
+            volume+=row['Volume']
+        avghigh = high/index
+        avgLow = low/index
+        avgVolume = volume/index
+        price_change = hist['Close'][-1] - hist['Close'][0]
+        #print(hist['Close'][-1], price_change)
+        if price_change > 0 and price_change/hist['Close'][0]>=2:
+            #print(f"{ticker} is going up by {price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
+            file.write(f"{ticker} is going up by {price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
+        elif price_change<0 and -price_change/hist['Close'][0]>=2:
+            #print(f"{ticker} is going down by {-price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
+            file.write(f"{ticker} is going down by {-price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
+        elif price_change ==0:
+            #print(f"{ticker} is staying consistent avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
+            file.write(f"{ticker} is staying consistent avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
+        #else:
+            #print(f"{ticker} avg high={avghigh} and avg low={avgLow}")
+    except Exception as e:
+        print("no data found?", e)
+
+def stockTrend():
+    stockstoWatch = ['AAPL', 'NVDA', 'META', 'BTC/USD']
+    active_assets = api.list_assets(status='active')
+    for stock in active_assets:
+        #if stock.exchange == 'NASDAQ':
+        #if stock.symbol in stockstoWatch:
+        #if "/" in stock.symbol:
+        check_stock_trend(stock.symbol)
+        #time.sleep(1)
+        #if stock.easy_to_borrow:
+            #print(f"stock {stock.symbol} is easy to borrow")
+    file.close()
+stockTrend()
