@@ -1,9 +1,13 @@
+import sys, os
+#sys.path.append()
+#print("here",os.getcwd('..'), sys.path)
 import alpaca_trade_api as tradeapi
 import time
 import datetime
 import sys
 import traceback
 import yfinance as yf
+#from stockPred import getSingleTicker
 
 APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
 
@@ -274,34 +278,59 @@ print(len(borrow))
 file = open("furtherAnalysis.txt", 'w')
 def check_stock_trend(ticker):
     try:
+        # Remove any unwanted characters or slashes from ticker
         ticker = ticker.split('/')[0]
         stock = yf.Ticker(ticker)
-        hist = stock.history(period="5d", interval='1d')
-        low = 0
-        high = 0
-        volume = 0
-        for index, (date, row) in enumerate(hist.iterrows()):
-            low += row['Low']
-            high += row['High']
-            volume+=row['Volume']
-        avghigh = high/index
-        avgLow = low/index
-        avgVolume = volume/index
+        hist = stock.history(period="1mo", interval='1d')
+
+        # Calculate price change over the period
         price_change = hist['Close'][-1] - hist['Close'][0]
-        #print(hist['Close'][-1], price_change)
-        if price_change > 0 and price_change/hist['Close'][0]>=2:
-            #print(f"{ticker} is going up by {price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
-            file.write(f"{ticker} is going up by {price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
-        elif price_change<0 and -price_change/hist['Close'][0]>=2:
-            #print(f"{ticker} is going down by {-price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
-            file.write(f"{ticker} is going down by {-price_change/hist['Close'][0]}%, avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
-        elif price_change ==0:
-            #print(f"{ticker} is staying consistent avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]}")
-            file.write(f"{ticker} is staying consistent avg high={avghigh} and avg low={avgLow} current stock price={hist['Close'][-1]} avg volume ={avgVolume}\n")
-        #else:
-            #print(f"{ticker} avg high={avghigh} and avg low={avgLow}")
+        price_change_pct = (price_change / hist['Close'][0]) * 100
+
+        # Calculate average high, low, volume, resistance, and support
+        avg_high = hist['High'].mean()
+        avg_low = hist['Low'].mean()
+        avg_volume = hist['Volume'].mean()
+        resistance = hist['Close'].max()
+        support = hist['Close'].min()
+
+        # Determine stock trend based on price change percentage
+        if price_change > 0 and price_change_pct >= 5 and avg_volume > 2000:
+            file.write(f"{ticker} is going up by {price_change_pct:.2f}%, avg high={avg_high:.6f}, avg low={avg_low:.6f}, "
+                       f"current stock price={hist['Close'][-1]:.6f}, avg volume={avg_volume:.1f}, "
+                       f"resistance={resistance:.6f}, support line={support:.6f}\n")
+        elif price_change < 0 and abs(price_change_pct) >= 5 and avg_volume > 2000:
+            file.write(f"{ticker} is going down by {abs(price_change_pct):.2f}%, avg high={avg_high:.6f}, avg low={avg_low:.6f}, "
+                       f"current stock price={hist['Close'][-1]:.6f}, avg volume={avg_volume:.1f}, "
+                       f"resistance={resistance:.6f}, support line={support:.6f}\n")
+        elif price_change == 0:
+            file.write(f"{ticker} is staying consistent, avg high={avg_high:.6f}, avg low={avg_low:.6f}, "
+                       f"current stock price={hist['Close'][-1]:.6f}, avg volume={avg_volume:.1f}, "
+                       f"resistance={resistance:.6f}, support line={support:.6f}\n")
+
     except Exception as e:
-        print("no data found?", e)
+        print(f"Error processing {ticker}: {e}")
+
+def find_support_levels(prices, window=10):
+    """
+    Function to identify potential support levels in a stock price series.
+
+    :param prices: A pandas Series representing the stock's closing prices.
+    :param window: The number of days to consider for finding local minima.
+    :return: A list of support levels.
+    """
+    support_levels = []
+    try:
+        for i in range(window, len(prices) - window):
+            # Check if the current price is a local minimum
+            if prices[i] == min(prices[i - window:i + window]):
+                support_levels.append(prices[i])
+        return sum(support_levels) / len(support_levels) if support_levels else 0
+    except Exception as e:
+        print(f"Error calculating support levels: {e}")
+        return 0
+
+
 
 def stockTrend():
     stockstoWatch = ['AAPL', 'NVDA', 'META', 'BTC/USD']
@@ -310,9 +339,80 @@ def stockTrend():
         #if stock.exchange == 'NASDAQ':
         #if stock.symbol in stockstoWatch:
         #if "/" in stock.symbol:
-        check_stock_trend(stock.symbol)
+        #data = yf.download(stock.symbol, start="2023-01-01", end="2024-01-01")
+        try:
+            check_stock_trend(stock.symbol)
+            #data = yf.download(stock.symbol, period="1y", progress=False)
+            #closing_prices = data['Close']
+            #level = find_support_levels(closing_prices)
+            #file.write(f"The support levels for {stock.symbol} are around: {level} current price={data['Close'][-1]} all time max in one year {data['Close'].max()}\n")
+        except Exception as e:
+            pass
         #time.sleep(1)
         #if stock.easy_to_borrow:
             #print(f"stock {stock.symbol} is easy to borrow")
     file.close()
-stockTrend()
+#stockTrend()
+
+def getSingleTicker(symbol):
+    counter = 1
+    try:
+        if '^' in symbol:
+            symbol = symbol[:stock.index("^")]
+        if '/' in symbol:
+            symbol = symbol.replace('/','-')
+        stock = yf.Ticker(symbol)
+        data = stock.history(period="1mo", interval='1d')
+        counter+=1
+        dailyavgChange = 0
+        weeklyavgChange = 0
+        dailyCount = 0
+        avglow = data['Low'].mean()
+        avghigh = data['High'].mean()
+        lowest = data['Low'].min()
+        highest = data['High'].max()
+        dailyAvgPrice = data['Close'].mean()
+        prev = 1
+        positive = []
+        negative = []
+        for date, row in data.iterrows():
+            dailyavgChange += abs(row['High'] - row['Low'])
+            dailyCount+=1
+            if (row['Close']- prev <0):
+                negative.append(abs(row['Close']-prev) /prev)
+            else:
+                positive.append((row['Close']-prev) / prev)
+            prev = row['Close']
+        
+        dailyavgChange = dailyavgChange/dailyCount
+        #RSI = 100 - [100 / (1 + RS)]
+        if dailyCount ==0 or sum(positive) == 0:
+            RSI = 0
+        elif sum(negative) == 0: 
+            RSI = 100
+        else:
+            RSI = 100 - (100 / (1+ ((sum(positive) / dailyCount)/(sum(negative)/ dailyCount))))
+        if RSI < 30:
+            Rating = "Oversold"
+        elif RSI > 80:
+            Rating = "OverBought"
+        else:
+            Rating = "Normal"
+        #file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Close'])+"\n")
+        return symbol, dailyavgChange, avglow, avghigh, Rating, dailyAvgPrice, lowest, highest
+    except Exception as e:
+        print(e)
+
+def anotherTest():
+    active_assets = api.list_assets(status='active')
+    count = 0
+    for stock in active_assets:
+        if '/' in stock.symbol and 'usd' == stock.symbol.lower().split('/')[1]:
+            print(getSingleTicker(stock.symbol))
+            count+=1
+    print(count)
+anotherTest()
+
+
+
+# Use the function to find support levels

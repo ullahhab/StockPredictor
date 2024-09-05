@@ -134,48 +134,79 @@ def buy():
             break
         randomList = []
         for stock in goodForBuy:
-                if retry >10:
-                    buySuspended = True
-                    timeoutForBuy = 24*3600 + time.time()
-                    break
-                try:
+            if retry >10:
+                buySuspended = True
+                timeoutForBuy = 24*3600 + time.time()
+                break
+            try:
+                num = random.randint(0, len(goodForBuy)-1)
+                while num in randomList and goodForBuy[num] in last5:
                     num = random.randint(0, len(goodForBuy)-1)
-                    while num in randomList and goodForBuy[num] in last5:
-                        num = random.randint(0, len(goodForBuy)-1)
-                    stock = getSingleTicker(goodForBuy[num])
-                    low = orderPrice(stock[0])
-                    if round(float(stock[2]), 2) >=low and money>=low:
-                        print(f"stock: {stock[0]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
-                        buyPrice = low
-                        sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
-                        stockBought = stock[0]
-                        shares = mon // low
-                        sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                        status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
-                        if status == 200:
-                            order = orderDet(orderId['buy'])
-                            if order!= None:
-                                limit_price = order.limit_price
-                                qty = order.qty
-                            else:
-                                limit_price = mon
-                                qty = shares
-                            sellList.append([stockBought, qty, orderId])
-                            updateLastOrder(stockBought)
-                            money = money - (float(limit_price) * float(order.qty))
-                            retry = 0
+                stock = getSingleTicker(goodForBuy[num])
+                low = orderPrice(goodForBuy[num])
+                if round(float(stock[2]), 2) >= low and money >= low:
+                    print(f"stock: {goodForBuy[num]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
+                    buyPrice = low
+                    sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
+                    stockBought = goodForBuy[num]
+                    shares = int(mon / low)
+                    sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
+                    if sellPrice == buyPrice:
+                        print("another fix")
+                        sellPrice+=0.01
+                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                    if status == 200:
+                        order = orderDet(orderId['buy'])
+                        if order!= None:
+                            limit_price = order.limit_price
+                            qty = order.qty
+                        else:
+                            limit_price = mon
+                            qty = shares
+                        sellList.append([stockBought, qty, orderId])
+                        updateLastOrder(stockBought)
+                        money = money - (float(limit_price) * float(order.qty))
+                        retry = 0
+                        break
+                    elif(status == 500 and orderId=="timeout"):
+                        if "pattern day" in str(reason).lower():
+                            stockList = activeList()
+                            for stock in stockList:
+                                goodForBuy = []
+                                if '/' in stock.symbol and 'usd' == stock.symbol.lower().split('/')[1]: 
+                                    goodForBuy.append(stock.symbol)
                             break
-                        elif(status == 500 and orderId=="timeout"):
-                            #reason can be updated here
-                            suspensionReason.add(f"{reason}")
-                            retry +=1
-                    time.sleep(1)
-                except APIError as e:
-                    suspensionReason += str(e)+"\n"
+                        suspensionReason.add(f"{reason}")
+                        retry +=1
+                '''elif round(float(stock[3]), 2) >= low and money >= low:
+                    print('order of short')
+                    buyPrice = low
+                    sellPrice = min(round(low - (low *0.02), 2), round((low-(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
+                    stockBought = goodForBuy[num]
+                    shares = mon // low
+                    sellNegative = round((buyPrice + (buyPrice * 0.07)), 2)
+                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, side='sell')
+                    if status == 200:
+                        order = orderDet(orderId['buy'])
+                        if order!= None:
+                            limit_price = order.limit_price
+                            qty = order.qty
+                        else:
+                            limit_price = mon
+                            qty = shares
+                        sellList.append([stockBought, qty, orderId])
+                        updateLastOrder(stockBought)
+                        money = money - (float(limit_price) * float(order.qty))
+                        retry = 0
+                        break
+                '''
+                time.sleep(1)
+            except APIError as e:
+                suspensionReason += str(e)+"\n"
 
-                except Exception as e:
-                    tb = traceback.format_exc()
-                    print("trace", tb, "error", e)
+            except Exception as e:
+                tb = traceback.format_exc()
+                print("trace", tb, "error", e)
 
 def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
     now = datetime.now(timezone.utc).replace(tzinfo=pytz.UTC)
@@ -246,8 +277,12 @@ def sell():
 
 
 valueRetry = 0
-analyze()
+timeAnaysis = time.time()
 while True:
+    if time.time() >= timeAnaysis:
+        print("doing analysis")
+        analyze()
+        timeAnaysis = 24*3600 + time.time()
     if float(accountValue())>0.0:
         run_bot()
         valueRetry = 0

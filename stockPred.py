@@ -143,12 +143,11 @@ def doAnalysis():
     stockSugg.close()
     stocklst = ''
     data = ""
-
+'''
 def getSingleTicker(symbol):
     global data, stocklst
     file  = open('stocks.csv','w')
     file.write("Stock, Daily Change, avg low, avg high, Weekly Change, percentage Profit, Highest, Lowest, Daily Average Price, RSI, Rating, Current Price\n")
-    getSymbl()
     """for symbl in stocklst:
         ticker = yf.Ticker(symbl)
         test = ticker.history(period='1mo')
@@ -230,6 +229,55 @@ def getSingleTicker(symbol):
     except Exception as e:
         print(e)
     file.close()
+'''
 
+def getSingleTicker(symbol):
+    counter = 1
+    try:
+        if '^' in symbol:
+            symbol = symbol[:stock.index("^")]
+        if '/' in symbol:
+            symbol = symbol.replace('/','-')
+        stock = yf.Ticker(symbol)
+        data = stock.history(period="1mo", interval='1d')
+        counter+=1
+        dailyavgChange = 0
+        weeklyavgChange = 0
+        dailyCount = 0
+        avglow = data['Low'].mean()
+        avghigh = data['High'].mean()
+        lowest = data['Low'].min()
+        highest = data['High'].max()
+        dailyAvgPrice = data['Close'].mean()
+        prev = 1
+        positive = []
+        negative = []
+        for date, row in data.iterrows():
+            dailyavgChange += abs(row['High'] - row['Low'])
+            dailyCount+=1
+            if (row['Close']- prev <0):
+                negative.append(abs(row['Close']-prev) /prev)
+            else:
+                positive.append((row['Close']-prev) / prev)
+            prev = row['Close']
+        
+        dailyavgChange = dailyavgChange/dailyCount
+        #RSI = 100 - [100 / (1 + RS)]
+        if dailyCount ==0 or sum(positive) == 0:
+            RSI = 0
+        elif sum(negative) == 0: 
+            RSI = 100
+        else:
+            RSI = 100 - (100 / (1+ ((sum(positive) / dailyCount)/(sum(negative)/ dailyCount))))
+        if RSI < 30:
+            Rating = "Oversold"
+        elif RSI > 80:
+            Rating = "OverBought"
+        else:
+            Rating = "Normal"
+        #file.write(stock+", "+str(dailyavgChange)+", "+str(avglow)+", "+str(avghigh)+", "+str(weeklyavgChange)+", "+str((dailyavgChange / row['Low'])*100)+", "+str(highest)+", "+str(lowest)+", "+str(dailyAvgPrice)+", "+str(RSI)+", "+str(Rating)+", "+str(row['Close'])+"\n")
+        return symbol, dailyavgChange, avglow, avghigh, Rating, dailyAvgPrice, lowest, highest
+    except Exception as e:
+        print(e)
 
 #doAnalysis()

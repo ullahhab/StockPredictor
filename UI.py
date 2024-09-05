@@ -237,7 +237,6 @@ class inputUI:
                         if pOrder.legs[1].side == "sell" and (pOrder.legs[1].type == "stop_limit" or pOrder.legs[1].type == "stop"):
                             adder['Stop_limit'] = pOrder.legs[1].id
                         continuation.append([pOrder.symbol, pOrder.qty, adder])
-        print(continuation)
         return continuation
 
 

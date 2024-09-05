@@ -9,12 +9,12 @@ APCA_API_BASE_URL = "https://paper-api.alpaca.markets"
 api = ""
 
 
-def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_price):
+def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_price, side='buy'):
     orderIds = {}
     try:
         order = api.submit_order(symbol=symbol,
                              qty=qty,
-                             side='buy',
+                             side=side,
                              type='limit',
                              time_in_force='gtc',
                              limit_price=limit,
