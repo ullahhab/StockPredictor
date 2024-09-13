@@ -15,7 +15,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney, getAllStock as activeList
+from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney, getAllStock as activeList, getPatternInfo, submitCryptoOrder
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -99,12 +99,16 @@ def run_bot():
 
 
 
-def analyze():
+def analyze(crypto=False):
     global buyPrice, sellPrice
     stockList = activeList()
     try:
         for stock in stockList:
-            goodForBuy.append(stock.symbol)
+            if crypto:
+                if '/' in stock.symbol and 'usd' == stock.symbol.lower().split('/')[1]:
+                    goodForBuy.append(stock.symbol)
+            else:
+                goodForBuy.append(stock.symbol)
         print(len(goodForBuy))
     except IndexError as e:
         pass
@@ -129,6 +133,7 @@ def buy():
         return
     suspensionReason = set()
     buySuspended = False
+    analyze(crypto=getPatternInfo())
     for mon in buyingPower:
         if retry > 10:
             break
@@ -143,18 +148,20 @@ def buy():
                 while num in randomList and goodForBuy[num] in last5:
                     num = random.randint(0, len(goodForBuy)-1)
                 stock = getSingleTicker(goodForBuy[num])
+                print(f"stock obj={stock}")
                 low = orderPrice(goodForBuy[num])
+                if low <= 0:
+                    low = float(stock[2])
                 if round(float(stock[2]), 2) >= low and money >= low:
                     print(f"stock: {goodForBuy[num]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                     buyPrice = low
                     sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
                     stockBought = goodForBuy[num]
-                    shares = int(mon / low)
+                    shares = mon // low
                     sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
                     if sellPrice == buyPrice:
-                        print("another fix")
                         sellPrice+=0.01
-                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice)
+                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, crypto=getPatternInfo())
                     if status == 200:
                         order = orderDet(orderId['buy'])
                         if order!= None:
@@ -169,13 +176,6 @@ def buy():
                         retry = 0
                         break
                     elif(status == 500 and orderId=="timeout"):
-                        if "pattern day" in str(reason).lower():
-                            stockList = activeList()
-                            for stock in stockList:
-                                goodForBuy = []
-                                if '/' in stock.symbol and 'usd' == stock.symbol.lower().split('/')[1]: 
-                                    goodForBuy.append(stock.symbol)
-                            break
                         suspensionReason.add(f"{reason}")
                         retry +=1
                 '''elif round(float(stock[3]), 2) >= low and money >= low:
@@ -232,7 +232,8 @@ def sell():
     for stock in sellList:
         time.sleep(1)
         try:
-            if len(stock)>=3:
+            print(stock)
+            if len(stock)>3:
                 limit_orderId = stock[2]["limitSell"]
                 stop_orderId = stock[2]["Stop_limit"]
                 orderBuyStatus = orderStatus(stock[2]["buy"])
@@ -268,6 +269,11 @@ def sell():
                 elif orderStatus(stock[2]["buy"])=='filled':
                     if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
                         replaceSellLimitOrder(stock[2])
+            elif orderDet(stock[2]['buy']).asset_class.lower() == 'crypto':
+                remove, mon = submitCryptoOrder(stock[2])
+                if remove:
+                    sellList.pop(sellList.index(stock))
+                    money+=mon
             else:
                 print("starting to look for order \n")
                 LookForOrderId(stock[0], stock)
@@ -279,10 +285,6 @@ def sell():
 valueRetry = 0
 timeAnaysis = time.time()
 while True:
-    if time.time() >= timeAnaysis:
-        print("doing analysis")
-        analyze()
-        timeAnaysis = 24*3600 + time.time()
     if float(accountValue())>0.0:
         run_bot()
         valueRetry = 0

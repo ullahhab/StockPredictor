@@ -124,52 +124,58 @@ def sellOrder(shares=4, symbol='AAPL', side='sell',type='stop_limit', limitPrice
         limit_price=limitPrice,
         time_in_force='gtc'
     )
-def putOrder():
-    new = {}
+def limitTakeProfitStopLoss(symbol, qty, limit, stop_loss_price, take_profit_price, side='buy', crypto=False):
+    orderIds = {}
     try:
-        order = api.submit_order(symbol='MNTS',
-                             qty=4,
-                             side='buy',
-                             type='limit',
-                             time_in_force='gtc',
-                             limit_price=250,
-                             order_class='bracket',
-                             stop_loss=dict(
-                                 stop_price=150,
-                                 # limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
-                             ),
-                             take_profit=dict(
-                                 limit_price=round((280 - (280 * 0.01)), 2),
-                             )
-                             )
+        if crypto:
+            order = api.submit_order(symbol=symbol,
+                                qty=qty,
+                                side=side,
+                                type='limit',
+                                time_in_force='gtc',
+                                limit_price=limit
+                                )
+        else:
+            order = api.submit_order(symbol=symbol,
+                                qty=qty,
+                                side=side,
+                                type='limit',
+                                time_in_force='gtc',
+                                limit_price=limit,
+                                order_class='bracket',
+                                stop_loss=dict(
+                                    stop_price=stop_loss_price,
+                                    # limit_price=round(stop_loss_price - 0.1,2)  # Optional: Set a limit price for the stop-loss
+                                ),
+                                take_profit=dict(
+                                    limit_price=round(take_profit_price, 2), #limit_price=round((take_profit_price - (take_profit_price * 0.01)), 2),
+                                )
+                                )
         tries = 1
-        for legs in order.legs:
-            print(legs.id, legs.side, legs.order_type)
         #########################this will need some modification############################
         while True:
-            time.sleep(1)
+            time.sleep(10)
             updated_order = api.get_order(order.id)
             print("order status", updated_order.status)
             temp = order.id
             if updated_order.status != 'rejected' and updated_order.status != "canceled" and updated_order.status != 'denied':  # or updated_order.status == 'accepted':
                 print("Order has been sent")
                 print("Order status", updated_order.status)
-                getOrderId(new, order)
-                print("orderDetail for stop order",orderDet(new['Stop_limit']))
-                print("new before",new)
-                return 200, updated_order.id, new
+                getOrderId(orderIds, order)
+                return 200, orderIds, ""
             elif updated_order.status == 'rejected' or updated_order.status == 'canceled' or updated_order.status == 'denied':
                 print("updated order", updated_order)
                 #print("Order has been ", updated_order.status, updated_order)
-                return 500, order.id, new
+                return 500, orderIds, order.status
             if tries >= 5:
                 print("issues putting the order", order.status)
-                return 500, order.id, new
+                return 500, orderIds, order.status
             if updated_order.status != 'new' and updated_order.status != "accepted" and updated_order.status != "pending_new":
                 tries += 1
     except Exception as e:
-        #tb = traceback.format_exc()
-        return 500, "timeout"
+        tb = traceback.format_exc()
+        print("trace", tb, "error", e)
+        return 500, "timeout", e
 
 def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice):
     if type == 'limit':
@@ -188,6 +194,16 @@ def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice):
             side=side,
             type=type,
             stop_price=limitPrice,
+            time_in_force=time_in_force
+        )
+    elif type == 'stop_limit':
+        order = api.submit_order(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            type=type,
+            stop_price=limitPrice,
+            limit_price=2222,
             time_in_force=time_in_force
         )
     return order
@@ -220,6 +236,7 @@ def replaceSellLimitOrder(ordersIds):
 
 def getOrderId(orderIds, orders):
     try:
+        orderIds["buy"] = orders.id
         for order in orders.legs:
             #print("*****************New Order deatils**********************")
             #print("orders", order)
@@ -227,7 +244,6 @@ def getOrderId(orderIds, orders):
                 orderIds["limitSell"] = order.id
             elif order.side == "sell" and (order.type == "stop_limit" or order.type == "stop"):
                 orderIds["Stop_limit"] = order.id
-        orderIds["buy"] = orders.id
         print("found ", len(orderIds), "debug", orderIds)
     except Exception as e:
         tb = traceback.format_exc()
@@ -243,6 +259,13 @@ def getPrice(id, symbl):
     print(det)
     priceDet = orderPrice(symbl)
     print((priceDet.price - float(det.filled_avg_price)) * float(det.filled_qty))
+
+def orderPrice(symbl):
+    try:
+        return api.get_latest_trade(symbl)
+    except Exception as e:
+        print(e)
+        return 0
 
 
 #getPrice('e316f8cb-cde7-4604-9b51-6d16c1577a0f', 'TSE')
@@ -406,13 +429,42 @@ def getSingleTicker(symbol):
 def anotherTest():
     active_assets = api.list_assets(status='active')
     count = 0
+    #api.get_latest_trade('BTCUSD')
     for stock in active_assets:
         if '/' in stock.symbol and 'usd' == stock.symbol.lower().split('/')[1]:
-            print(getSingleTicker(stock.symbol))
+            x = getSingleTicker(stock.symbol)
+            print(stock.symbol)
+            new = limitTakeProfitStopLoss(stock.symbol.split('/')[0]+stock.symbol.split('/')[1], 1 ,x[2], x[6], x[3], crypto=True)
+            if new[0] == 200:
+                print(orderDet(new[1]['buy']).asset_class.upper())
+                
+                if orderDet(new[1]['buy']).asset_class.lower() == 'crypto':
+                    det = orderDet(new[1]['buy'])
+                    print(det)
+                    if det.status.lower() == 'filled':
+                        order = submitIndividualOrder(stock.symbol.split('/')[0]+stock.symbol.split('/')[1],det.qty, 'sell','limit','gtc',x[3])
+                        new[1]['limit'] = order.id
+                        print(orderDet(order.id))
+                        print("limit", order.status)
+                        order = submitIndividualOrder(stock.symbol.split('/')[0]+stock.symbol.split('/')[1], det.qty, 'sell','stop_limit','gtc',x[3])
+                        new[1]['stop_limit'] = order.id
+                        print("stop_market", order.status)
+                break
+                    
+            #print(orderPrice(stock.symbol.split('/')[0]+stock.symbol.split('/')[1]))
+            #def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice)
             count+=1
     print(count)
 anotherTest()
-
-
+#print(api.get_account())
+def getPatternInfo():
+    try:
+        info = api.get_account()
+        return (int(info.daytrade_count) >=3) and (float(info.portfolio_value)<25000.00) 
+    except Exception as e:
+        print(e)
+        return False
+#print(getPatternInfo())
+print(api.get_latest_trade('USDT'))
 
 # Use the function to find support levels
