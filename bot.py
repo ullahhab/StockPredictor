@@ -148,10 +148,9 @@ def buy():
                 while num in randomList and goodForBuy[num] in last5:
                     num = random.randint(0, len(goodForBuy)-1)
                 stock = getSingleTicker(goodForBuy[num])
-                print(f"stock obj={stock}")
                 low = orderPrice(goodForBuy[num])
                 if low <= 0:
-                    low = float(stock[2])
+                    low = float(stock[2]) #this will buy at market price need to make changes to it. For now it works
                 if round(float(stock[2]), 2) >= low and money >= low:
                     print(f"stock: {goodForBuy[num]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
                     buyPrice = low

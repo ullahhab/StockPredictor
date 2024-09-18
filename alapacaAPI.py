@@ -309,6 +309,7 @@ def submitCryptoOrder(orderList):
                     order = submitIndividualOrder(symbol, det.qty, 'sell','limit','gtc',(float(det.limit_price)+(float(det.limit_price) * 0.01)))
                     orderList['limitSell'] = order.id
                     return False, 0
+        return False, 0
     except Exception as e:
         print(e)
         if 'insufficient balance' in str(e).lower():
