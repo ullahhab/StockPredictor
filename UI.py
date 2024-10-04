@@ -238,6 +238,8 @@ class inputUI:
                             adder['Stop_limit'] = pOrder.legs[1].id
                         continuation.append([pOrder.symbol, pOrder.qty, adder])
         return continuation
+    
+    
 
 
 

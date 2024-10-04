@@ -68,6 +68,8 @@ def ChangeOrderStatus(id):
     try:
         updated_order = api.get_order(id)
         return updated_order.status
+    except APIError:
+        return 'unknown'
     except:
         return "unknown"
 
@@ -187,6 +189,7 @@ def submitIndividualOrder(symbol, qty, side, type, time_in_force, limitPrice):
             limit_price=2222,
             time_in_force=time_in_force
         )
+    time.sleep(3)
     return order
 
 def setSecret(key, secret, baseURL):
@@ -221,6 +224,7 @@ def replaceSellOrder(ordersIds):
     '''
 def replaceOrder(orderId, qty, newLimitPrice, time_in_force='gtc'):
     order = api.replace_order(order_id = orderId, qty = qty, limit_price=newLimitPrice, time_in_force=time_in_force)
+    time.sleep(3)
     return order
 
 def replaceSellLimitOrder(ordersIds):
@@ -228,7 +232,7 @@ def replaceSellLimitOrder(ordersIds):
     newLimitPrice = round(float(det.limit_price) -(float(det.limit_price) * 0.01), 2)
     order = replaceOrder(ordersIds['limitSell'], det.qty, newLimitPrice, time_in_force='gtc')
     ordersIds['limitSell'] = order.id
-    time.sleep(1)
+    time.sleep(3)
 
 
 def getOrderPriceDetails(orderIds):
@@ -277,13 +281,20 @@ def orderStatus(orderId=None,
         return det.status == status
 
 def isShortable(symbol):
-    return api.get_asset(symbol).easy_to_borrow
+    try:
+        symbol = convertCrypto(symbol)
+        time.sleep(3)
+        return api.get_asset(symbol).easy_to_borrow
+    except APIError as e:
+        tb = traceback.format_exc()
+        print("trace", tb, "error", e)
+        return False
 
 
 def submitCryptoOrder(orderList):
     try:
         det = orderDet(orderList['buy'])
-        symbol = det.symbol.split('/')[0]+det.symbol.split('/')[1]
+        symbol = convertCrypto(det.symbol)
         if det.status.lower() == 'filled':
             if len(orderList)<2:
                 order = submitIndividualOrder(symbol, det.qty, 'sell','limit','gtc',(float(det.limit_price)+(float(det.limit_price) * 0.01)))
@@ -327,6 +338,12 @@ def submitCryptoOrder(orderList):
                 return True, 0
         else:
             return False, 0
+def convertCrypto(symbol):
+    if '/' in symbol:
+        return symbol.split('/')[0]+symbol.split('/')[1]
+    else:
+        return symbol
+
 
 
 

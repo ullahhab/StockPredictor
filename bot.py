@@ -15,7 +15,7 @@ import random
 import threading
 import random
 import yfinance as yf
-from alapacaAPI import ChangeOrderStatus as orderStatus, getOrderId, orderLimitPriceDetails, orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, getBuyOrderPrice, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, orderLimitPriceDetails, getOrderPriceDetails, calculateMoney, getAllStock as activeList, getPatternInfo, submitCryptoOrder
+from alapacaAPI import ChangeOrderStatus as orderStatus,orderPrice, setSecret, cancelOrder, LookForOrderId,accountValue, orderDet, replaceSellLimitOrder, limitTakeProfitStopLoss as putOrder, orderPrice, getOrderPriceDetails, calculateMoney, getAllStock as activeList, getPatternInfo, submitCryptoOrder, isShortable
 from tradingStrat import strat
 from stockPred import doAnalysis
 from stockListCleaner import cleaner
@@ -88,8 +88,8 @@ def run_bot():
     global sellList, goodForBuy, last5, money, buySuspended
     lock = threading.Lock()
 
-    buyThread = threading.Thread(target=buy, name="buyThread", args=())
-    sellThread = threading.Thread(target=sell, name="sellThread", args=())
+    buyThread = threading.Thread(target=buy, name="buyThread", args=(lock,))
+    sellThread = threading.Thread(target=sell, name="sellThread", args=(lock,))
 
     buyThread.start()
     sellThread.start()
@@ -117,9 +117,9 @@ def analyze(crypto=False):
         print("trace", tb, "error", e)
 
 
-def buy():
+def buy(lock):
     retry = 0
-    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason
+    global goodForBuy, last5, sellList, money, timeoutForBuy, buySuspended, suspensionReason, stop_loop
     mon = 0
     if int(money)<=1:
         return
@@ -144,61 +144,63 @@ def buy():
                 timeoutForBuy = 24*3600 + time.time()
                 break
             try:
+                if stop_loop:
+                    return
                 num = random.randint(0, len(goodForBuy)-1)
                 while num in randomList and goodForBuy[num] in last5:
                     num = random.randint(0, len(goodForBuy)-1)
-                stock = getSingleTicker(goodForBuy[num])
-                low = orderPrice(goodForBuy[num])
-                if low <= 0:
-                    low = float(stock[2]) #this will buy at market price need to make changes to it. For now it works
-                if round(float(stock[2]), 2) >= low and money >= low:
-                    print(f"stock: {goodForBuy[num]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
-                    buyPrice = low
-                    sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
-                    stockBought = goodForBuy[num]
-                    shares = mon // low
-                    sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
-                    if sellPrice == buyPrice:
-                        sellPrice+=0.01
-                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, crypto=getPatternInfo())
-                    if status == 200:
-                        order = orderDet(orderId['buy'])
-                        if order!= None:
-                            limit_price = order.limit_price
-                            qty = order.qty
-                        else:
-                            limit_price = mon
-                            qty = shares
-                        sellList.append([stockBought, qty, orderId])
-                        updateLastOrder(stockBought)
-                        money = money - (float(limit_price) * float(order.qty))
-                        retry = 0
-                        break
-                    elif(status == 500 and orderId=="timeout"):
-                        suspensionReason.add(f"{reason}")
-                        retry +=1
-                '''elif round(float(stock[3]), 2) >= low and money >= low:
-                    print('order of short')
-                    buyPrice = low
-                    sellPrice = min(round(low - (low *0.02), 2), round((low-(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
-                    stockBought = goodForBuy[num]
-                    shares = mon // low
-                    sellNegative = round((buyPrice + (buyPrice * 0.07)), 2)
-                    status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, side='sell')
-                    if status == 200:
-                        order = orderDet(orderId['buy'])
-                        if order!= None:
-                            limit_price = order.limit_price
-                            qty = order.qty
-                        else:
-                            limit_price = mon
-                            qty = shares
-                        sellList.append([stockBought, qty, orderId])
-                        updateLastOrder(stockBought)
-                        money = money - (float(limit_price) * float(order.qty))
-                        retry = 0
-                        break
-                '''
+                with lock:
+                    stock = getSingleTicker(goodForBuy[num])
+                    low = orderPrice(goodForBuy[num])
+                    if low <= 0:
+                        low = float(stock[2]) #this will buy at market price need to make changes to it. For now it works
+                    if round(float(stock[2]), 2) >= low and money >= low:
+                        print(f"stock: {goodForBuy[num]} stock buy Price={stock[2]} Current Stock Price={low} Value={mon}")
+                        buyPrice = low
+                        sellPrice = min(round(low + (low *0.02), 2), round((low+(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
+                        stockBought = goodForBuy[num]
+                        shares = mon // low
+                        sellNegative = round((buyPrice - (buyPrice * 0.07)), 2)
+                        if sellPrice == buyPrice:
+                            sellPrice+=0.01
+                        status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, crypto=getPatternInfo())
+                        if status == 200:
+                            order = orderDet(orderId['buy'])
+                            if order!= None:
+                                limit_price = order.limit_price
+                                qty = order.qty
+                            else:
+                                limit_price = mon
+                                qty = shares
+                            sellList.append([stockBought, qty, orderId])
+                            updateLastOrder(stockBought)
+                            money = money - (float(limit_price) * float(order.qty))
+                            retry = 0
+                            break
+                        elif(status == 500 and orderId=="timeout"):
+                            suspensionReason.add(f"{reason}")
+                            retry +=1
+                    elif round(float(stock[3]), 2) >= low and money >= low and isShortable(goodForBuy[num]):
+                        print('order of short')
+                        buyPrice = low
+                        sellPrice = min(round(low - (low *0.02), 2), round((low-(float(stock[1])/2)),2)) #HUMAN DECIDED: round(low + (low *0.01)) #BOT Decided: round((low+(float(stock[1])/2)),2)
+                        stockBought = goodForBuy[num]
+                        shares = mon // low
+                        sellNegative = round((buyPrice + (buyPrice * 0.07)), 2)
+                        status, orderId, reason = putOrder(stockBought, shares, round(low, 2), sellNegative, sellPrice, side='sell')
+                        if status == 200:
+                            order = orderDet(orderId['buy'])
+                            if order!= None:
+                                limit_price = order.limit_price
+                                qty = order.qty
+                            else:
+                                limit_price = mon
+                                qty = shares
+                            sellList.append([stockBought, qty, orderId])
+                            updateLastOrder(stockBought)
+                            money = money - (float(limit_price) * float(order.qty))
+                            retry = 0
+                            break
                 time.sleep(1)
             except APIError as e:
                 suspensionReason += str(e)+"\n"
@@ -225,65 +227,69 @@ def getTimeDifference(time, day=0, hours=0, weeks=0, minutes=0):
        
 '''
 
-def sell():
-    global sellList, shares, money
+def sell(lock):
+    global sellList, shares, money, stop_loop
     # two possibilities if the stock is on hold or acutually excecuted. Either way just look for order id or stockBought for sell order
-    for stock in sellList:
-        time.sleep(1)
-        try:
-            print(stock)
-            if len(stock)>3:
-                limit_orderId = stock[2]["limitSell"]
-                stop_orderId = stock[2]["Stop_limit"]
-                orderBuyStatus = orderStatus(stock[2]["buy"])
-                if orderBuyStatus=='filled':
-                    if 'orderFilledTime' not in stock[2]:
-                        det = orderDet(stock[2]["buy"])
-                        stock[2]['orderFilledTime'] = det.filled_at
-                    getOrderPriceDetails(stock[2])
-                elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), day=3):
-                    corderdet = cancelOrder(stock[2]["buy"])
-                    if corderdet[0].status == 'canceled':
-                        money+=corderdet[1]
+    with lock:
+        for stock in sellList:
+            time.sleep(1)
+            try:
+                if stop_loop:
+                    return
+                print(stock)
+                if len(stock[2])>2:
+                    limit_orderId = stock[2]["limitSell"]
+                    stop_orderId = stock[2]["Stop_limit"]
+                    orderBuyStatus = orderStatus(stock[2]["buy"])
+                    if orderBuyStatus=='filled':
+                        if 'orderFilledTime' not in stock[2]:
+                            det = orderDet(stock[2]["buy"])
+                            stock[2]['orderFilledTime'] = det.filled_at
+                        getOrderPriceDetails(stock[2])
+                    elif getTimeDifference(orderDet(stock[2]["buy"]).submitted_at.replace(tzinfo=pytz.UTC), day=3):
+                        corderdet = cancelOrder(stock[2]["buy"])
+                        if corderdet[0].status == 'canceled':
+                            money+=corderdet[1]
+                            sellList.pop(sellList.index(stock))
+                    elif 'canceled' == orderBuyStatus:
+                        #remove the stock and get the money
+                        mon, remove = calculateMoney(stock[2]['buy'])
+                        money+=mon
                         sellList.pop(sellList.index(stock))
-                elif 'canceled' == orderBuyStatus:
-                    #remove the stock and get the money
-                    mon, remove = calculateMoney(stock[2]['buy'])
-                    money+=mon
-                    sellList.pop(sellList.index(stock))
-                limit_status = orderStatus(limit_orderId)
-                stop_status = orderStatus(stop_orderId)
-                #TODO: make it robust so if half n half than apply that price
-                if limit_status == 'filled':
-                    # remove the order from the list, update the money, and update file
-                    filledmoney,remove= calculateMoney(limit_orderId)
+                    limit_status = orderStatus(limit_orderId)
+                    stop_status = orderStatus(stop_orderId)
+                    #TODO: make it robust so if half n half than apply that price
+                    if limit_status == 'filled':
+                        # remove the order from the list, update the money, and update file
+                        filledmoney,remove= calculateMoney(limit_orderId)
+                        if remove:
+                            sellList.pop(sellList.index(stock))
+                            money += filledmoney
+                    elif stop_status == "filled":
+                        filledmoney, remove = calculateMoney(stop_orderId)
+                        if remove:
+                            sellList.pop(sellList.index(stock))
+                            money += filledmoney
+                    elif orderStatus(stock[2]["buy"])=='filled':
+                        if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
+                            replaceSellLimitOrder(stock[2])
+                elif orderDet(stock[2]['buy']).asset_class.lower() == 'crypto':
+                    remove, mon = submitCryptoOrder(stock[2])
                     if remove:
                         sellList.pop(sellList.index(stock))
-                        money += filledmoney
-                elif stop_status == "filled":
-                    filledmoney, remove = calculateMoney(stop_orderId)
-                    if remove:
-                        sellList.pop(sellList.index(stock))
-                        money += filledmoney
-                elif orderStatus(stock[2]["buy"])=='filled':
-                    if getTimeDifference(stock[2]['orderFilledTime'].replace(tzinfo=pytz.UTC), day=5):
-                        replaceSellLimitOrder(stock[2])
-            elif orderDet(stock[2]['buy']).asset_class.lower() == 'crypto':
-                remove, mon = submitCryptoOrder(stock[2])
-                if remove:
-                    sellList.pop(sellList.index(stock))
-                    money+=mon
-            else:
-                print("starting to look for order \n")
-                LookForOrderId(stock[0], stock)
-        except Exception as e:
-            tb = traceback.format_exc()
-            print("trace", tb, "error", e)
+                        money+=mon
+                else:
+                    print("starting to look for order \n")
+                    LookForOrderId(stock[0], stock)
+            except Exception as e:
+                tb = traceback.format_exc()
+                print("trace", tb, "error", e)
 
 
 valueRetry = 0
 timeAnaysis = time.time()
-while True:
+
+'''while True:
     if float(accountValue())>0.0:
         run_bot()
         valueRetry = 0
@@ -291,4 +297,63 @@ while True:
         break
     else:
         valueRetry+=1
-    time.sleep(60)
+    time.sleep(60)'''
+
+def start_bot_loop():
+    global valueRetry, stop_loop
+    stop_loop = False  # Reset stop flag when loop starts
+
+    while not stop_loop:
+        if float(accountValue()) > 0.0:
+            run_bot()  # Run bot in the loop
+            valueRetry = 0
+        elif valueRetry > 3:
+            print("Exceeded retries, stopping loop.")
+            break
+        else:
+            valueRetry += 1
+
+        time.sleep(1)  # Sleep for 60 seconds
+
+    print("Bot loop stopped.")
+
+    # After loop stops, update button states to allow starting again
+    start_button.config(state=tk.NORMAL)
+    stop_button.config(state=tk.DISABLED)
+
+# Function to run the bot loop in a separate thread
+def run_bot_thread():
+    start_button.config(state=tk.DISABLED)  # Disable Start Button when bot is running
+    stop_button.config(state=tk.NORMAL)  # Enable Stop Button
+    bot_thread = threading.Thread(target=start_bot_loop)
+    bot_thread.start()
+
+# Function to stop the bot loop
+def stop_bot():
+    global stop_loop
+    stop_loop = True  # Set the flag to stop the loop
+    print("Stop signal sent.")
+    stop_button.config(state=tk.DISABLED)  # Disable Stop Button
+    start_button.config(state=tk.NORMAL)  # Enable Start Button after stopping
+
+# Function to automatically start the bot when the UI is launched
+def auto_start():
+    run_bot_thread()  # Automatically start the bot
+
+# Create the UI
+root = tk.Tk()
+root.title("Bot Control")
+
+# Start Button to manually run the bot (disabled initially)
+start_button = tk.Button(root, text="Start Bot", state=tk.DISABLED, command=run_bot_thread)
+start_button.pack(pady=10)
+
+# Stop Button to stop the bot
+stop_button = tk.Button(root, text="Stop Bot", command=stop_bot)
+stop_button.pack(pady=10)
+
+# Automatically start the bot when the app runs
+root.after(100, auto_start)  # Delay to allow the UI to load before starting the bot
+
+# Start the Tkinter event loop
+root.mainloop()
